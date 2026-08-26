@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Coins, Sparkles } from 'lucide-react'
+import { Coins, Sparkles, Heart } from 'lucide-react'
 import { sfx } from './sounds.js'
 
 const BURST = Array.from({ length: 14 }, (_, i) => {
@@ -13,10 +13,17 @@ const BURST = Array.from({ length: 14 }, (_, i) => {
   }
 })
 
+const SPARKLES = [
+  { id: 0, cls: '-top-3 -left-3', dx: '-14px', dy: '-18px', delay: 0 },
+  { id: 1, cls: '-top-4 right-4', dx: '12px', dy: '-20px', delay: 0.15 },
+  { id: 2, cls: 'top-6 -right-4', dx: '18px', dy: '-6px', delay: 0.3 },
+  { id: 3, cls: 'top-8 -left-5', dx: '-18px', dy: '4px', delay: 0.45 },
+]
+
 /**
- * End-of-match vault: dial spins, door swings open, coins burst out and
- * the earned total counts up. LOSS thuds first and only creaks open.
- * Practice mode opens to a blue XP glow instead of gold coins.
+ * End-of-match treasure box: the heart clasp jiggles, the lid pops open,
+ * coins burst out and the earned total counts up. LOSS thuds first and only
+ * creaks open. Practice mode opens to a blue XP glow instead of gold coins.
  */
 export default function VaultReveal({ coins, xp, result, practice, onDone }) {
   // spin -> (thud on LOSS) -> open -> count -> done
@@ -64,27 +71,22 @@ export default function VaultReveal({ coins, xp, result, practice, onDone }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage])
 
-  const glowColor = practice ? 'from-blue-300 via-blue-400 to-blue-600' : 'from-yellow-200 via-yellow-400 to-amber-600'
+  const glowColor = practice ? 'from-blue-300 via-sky-200 to-blue-500' : 'from-yellow-200 via-amber-300 to-pink-300'
 
   return (
     <div className="flex flex-col items-center">
-      <div className={`relative w-40 h-40 md:w-44 md:h-44 ${stage === 'thud' ? 'anim-vault-thud' : ''}`}>
-        {/* vault body */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-slate-500 to-slate-700 border-8 border-slate-800 shadow-2xl"></div>
-        {/* corner bolts */}
-        {['top-2 left-2', 'top-2 right-2', 'bottom-2 left-2', 'bottom-2 right-2'].map((pos) => (
-          <div key={pos} className={`absolute ${pos} w-3 h-3 rounded-full bg-slate-300 border-2 border-slate-800`}></div>
-        ))}
-
-        {/* interior glow + treasure (revealed when door opens) */}
+      <div className={`relative w-44 h-40 md:w-48 md:h-44 ${stage === 'thud' ? 'anim-vault-thud' : ''}`}>
+        {/* interior glow + treasure (peeks out when the lid opens) */}
         {opened && (
-          <div className={`absolute inset-3 rounded-2xl bg-gradient-to-br ${glowColor} anim-vault-glow flex items-center justify-center overflow-hidden`}>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.7),transparent_65%)]"></div>
+          <div className={`absolute left-3 right-3 top-9 bottom-2 rounded-2xl bg-gradient-to-t ${glowColor} anim-vault-glow flex items-start justify-center pt-1 overflow-hidden`}>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.75),transparent_65%)]"></div>
             {practice ? (
-              <Sparkles className="w-14 h-14 text-white drop-shadow-lg relative z-10" />
+              <Sparkles className="w-12 h-12 text-white drop-shadow-lg relative z-10" />
             ) : (
-              <div className="relative z-10 flex flex-col items-center">
-                <Coins className="w-14 h-14 text-yellow-900 fill-yellow-200 drop-shadow-lg" />
+              <div className="relative z-10 flex items-center gap-1 text-3xl leading-none">
+                <span>💎</span>
+                <Coins className="w-11 h-11 text-amber-900 fill-yellow-300 drop-shadow-lg" />
+                <span>💖</span>
               </div>
             )}
           </div>
@@ -92,11 +94,11 @@ export default function VaultReveal({ coins, xp, result, practice, onDone }) {
 
         {/* coin burst */}
         {(stage === 'count' || stage === 'done') && total > 0 && (
-          <div className="absolute inset-0 pointer-events-none z-20">
+          <div className="absolute inset-0 pointer-events-none z-30">
             {BURST.map((p) => (
               <div
                 key={p.id}
-                className="anim-coin-burst absolute left-1/2 top-1/2 w-4 h-4 -ml-2 -mt-2 rounded-full border-2 shadow"
+                className="anim-coin-burst absolute left-1/2 top-1/3 w-4 h-4 -ml-2 -mt-2 rounded-full border-2 shadow"
                 style={{
                   '--dx': p.dx,
                   '--dy': p.dy,
@@ -109,24 +111,43 @@ export default function VaultReveal({ coins, xp, result, practice, onDone }) {
           </div>
         )}
 
-        {/* vault door (circular, swings away when open) */}
-        <div className={`absolute inset-3 z-10 ${opened ? 'anim-door-open' : ''}`} style={{ transformOrigin: '100% 50%' }}>
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-400 to-slate-600 border-4 border-slate-800 shadow-inner flex items-center justify-center">
-            {/* dial */}
-            <div className={`w-14 h-14 rounded-full bg-slate-300 border-4 border-slate-700 relative ${stage === 'spin' ? 'anim-dial-spin' : ''}`}>
-              {[0, 45, 90, 135].map((deg) => (
-                <div
-                  key={deg}
-                  className="absolute left-1/2 top-1/2 w-1.5 h-12 -ml-[3px] -mt-6 bg-slate-600 rounded"
-                  style={{ transform: `rotate(${deg}deg)` }}
-                ></div>
-              ))}
-              <div className="absolute left-1/2 top-1/2 w-4 h-4 -ml-2 -mt-2 rounded-full bg-slate-700 border-2 border-slate-900"></div>
-            </div>
-            {/* handle spokes hint */}
-            <div className="absolute bottom-3 w-10 h-2 rounded-full bg-slate-700/60"></div>
+        {/* box body */}
+        <div className="absolute left-0 right-0 bottom-0 h-24 rounded-b-3xl rounded-t-md bg-gradient-to-b from-pink-400 via-pink-500 to-fuchsia-700 border-4 border-fuchsia-900 z-10 shadow-xl">
+          {/* gold band */}
+          <div className="absolute inset-x-0 top-5 h-2.5 bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 border-y-2 border-amber-600/60"></div>
+          {/* star bolts */}
+          {['bottom-2 left-2', 'bottom-2 right-2', 'top-9 left-2', 'top-9 right-2'].map((pos) => (
+            <span key={pos} className={`absolute ${pos} text-yellow-300 text-sm leading-none drop-shadow`}>★</span>
+          ))}
+          {/* heart clasp = the lock; it jiggles while "unlocking" */}
+          <div
+            className={`absolute left-1/2 -ml-6 top-0 -mt-3 w-12 h-12 rounded-full bg-gradient-to-br from-yellow-200 to-amber-400 border-4 border-amber-600 shadow-md flex items-center justify-center ${stage === 'spin' ? 'anim-dial-spin' : ''}`}
+          >
+            <Heart className="w-6 h-6 text-pink-600 fill-pink-500" />
           </div>
         </div>
+
+        {/* lid — hinged on the left, pops open */}
+        <div className={`absolute left-0 right-0 top-5 h-14 rounded-t-3xl bg-gradient-to-b from-pink-300 via-pink-400 to-pink-500 border-4 border-fuchsia-900 z-20 shadow-lg ${opened ? 'anim-chest-lid' : ''}`}>
+          <div className="absolute inset-x-3 top-2 h-2 rounded-full bg-white/50"></div>
+          <div className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400"></div>
+          <span className="absolute top-1 right-3 text-white/80 text-lg leading-none">✦</span>
+        </div>
+
+        {/* sparkles once open */}
+        {opened && (
+          <div className="absolute inset-0 pointer-events-none z-30">
+            {SPARKLES.map((s) => (
+              <span
+                key={s.id}
+                className={`anim-star-burst absolute ${s.cls} text-yellow-300 text-3xl leading-none`}
+                style={{ '--dx': s.dx, '--dy': s.dy, animationDelay: `${s.delay}s` }}
+              >
+                ✨
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* counter */}
@@ -143,13 +164,13 @@ export default function VaultReveal({ coins, xp, result, practice, onDone }) {
             <span className={`text-3xl font-black tabular-nums ${practice ? 'text-blue-600' : 'text-yellow-700'}`}>
               {count}
             </span>
-            <span className={`text-sm font-black uppercase ${practice ? 'text-blue-400' : 'text-yellow-600'}`}>
-              {practice ? 'XP' : 'Coins'}
+            <span className={`text-sm font-black ${practice ? 'text-blue-400' : 'text-yellow-600'}`}>
+              {practice ? 'XP' : 'מטבעות'}
             </span>
           </div>
         ) : (
-          <span className="text-sm font-black text-slate-400 uppercase tracking-widest">
-            {isLoss && stage === 'thud' ? '...נעול חזק' : '...פותחים את הכספת'}
+          <span className="text-sm font-black text-slate-400 tracking-wide" dir="rtl">
+            {isLoss && stage === 'thud' ? 'הקופסה תקועה…' : 'פותחים את הקופסה…'}
           </span>
         )}
       </div>

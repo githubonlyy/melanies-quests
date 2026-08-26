@@ -43,7 +43,7 @@ export const THEMES = {
     arcade: {
       catch: { good: '💎', bad: '🕷️', title: 'ציד יהלומים', he: 'תפסו יהלומים, תתחמקו מעכבישים!' },
       flappy: { hero: '🦋', wall: '#ff4fb3', title: 'פרפר בטיסה', he: 'הקישו כדי לעוף בין העמודים!' },
-      breaker: { title: 'שוברים בועות', he: 'פוצצו את כל הבועות עם הכדור!', bricks: ['#ff4fb3', '#ff8ad4', '#ffd6ef', '#f472b6', '#e879f9'] },
+      breaker: { emoji: '🫧', title: 'שוברים בועות', he: 'פוצצו את כל הבועות עם הכדור!', bricks: ['#ff4fb3', '#ff8ad4', '#ffd6ef', '#f472b6', '#e879f9'] },
       whack: { good: '🐩', bad: '🕷️', title: 'תפסו את הכלבלב', he: 'תפסו את הכלבלבים — לא את העכבישים!' },
     },
     avatarPreset: { hair: 'hair-long-blonde', dress: 'dress-pink-gown', head: 'head-tiara' },
@@ -72,7 +72,7 @@ export const THEMES = {
     arcade: {
       catch: { good: '⭐', bad: '🌩️', title: 'תפיסת כוכבים', he: 'תפסו כוכבים, תתחמקו מסופות!' },
       flappy: { hero: '🦄', wall: '#7c3aed', title: 'חד-קרן מעופף', he: 'הקישו כדי לעוף בין העננים!' },
-      breaker: { title: 'קשת בענן', he: 'שברו את כל צבעי הקשת!', bricks: ['#f87171', '#fb923c', '#fde047', '#4ade80', '#60a5fa', '#a78bfa'] },
+      breaker: { emoji: '🌈', title: 'קשת בענן', he: 'שברו את כל צבעי הקשת!', bricks: ['#f87171', '#fb923c', '#fde047', '#4ade80', '#60a5fa', '#a78bfa'] },
       whack: { good: '🦄', bad: '🌩️', title: 'תפסו את החד-קרן', he: 'תפסו חדי-קרן — לא סופות!' },
     },
     avatarPreset: { hair: 'hair-rainbow', dress: 'dress-rainbow', head: 'head-horn', back: 'back-wings' },
@@ -100,7 +100,7 @@ export const THEMES = {
     arcade: {
       catch: { good: '🌸', bad: '🐝', title: 'קטיף פרחים', he: 'תפסו פרחים, תתחמקו מדבורים!' },
       flappy: { hero: '🐞', wall: '#15803d', title: 'חיפושית עפה', he: 'הקישו כדי לעוף בין הגבעולים!' },
-      breaker: { title: 'פריחה', he: 'פתחו את כל הפרחים עם הכדור!', bricks: ['#f9a8d4', '#fde047', '#fb923c', '#f43f5e', '#c084fc'] },
+      breaker: { emoji: '🌷', title: 'פריחה', he: 'פתחו את כל הפרחים עם הכדור!', bricks: ['#f9a8d4', '#fde047', '#fb923c', '#f43f5e', '#c084fc'] },
       whack: { good: '🐰', bad: '🐝', title: 'תפסו את הארנב', he: 'תפסו ארנבים — לא דבורים!' },
     },
     avatarPreset: { hair: 'hair-braids', dress: 'dress-floral', head: 'head-flower-crown' },

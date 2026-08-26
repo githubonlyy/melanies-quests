@@ -16,8 +16,18 @@ export function loadLastTheme() {
 
 const ThemeContext = createContext(null)
 
+// `?theme=unicorn` skips the picker — handy for dev links and screenshots
+function themeFromUrl() {
+  try {
+    const v = new URLSearchParams(window.location.search).get('theme')
+    return v && THEMES[v] ? v : null
+  } catch {
+    return null
+  }
+}
+
 export function ThemeProvider({ children, initial = null }) {
-  const [themeId, setThemeId] = useState(initial) // null until she picks
+  const [themeId, setThemeId] = useState(() => initial ?? themeFromUrl()) // null until she picks
   const [lastTheme] = useState(loadLastTheme)
 
   const setTheme = (id) => {

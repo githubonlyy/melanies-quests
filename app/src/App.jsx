@@ -13,6 +13,7 @@ import Arcade from './screens/Arcade.jsx'
 import CoachStats from './screens/CoachStats.jsx'
 import MatchEngine from './match/MatchEngine.jsx'
 import Avatar from './avatar/Avatar.jsx'
+import wardrobe from './data/wardrobe.json'
 
 const ToastContext = createContext(() => {})
 export const useToast = () => useContext(ToastContext)
@@ -72,6 +73,20 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Picking a world dresses the doll in that world's preset — but only over
+  // free starter items, never over something she chose and paid for.
+  useEffect(() => {
+    if (!theme) return
+    const free = new Set(wardrobe.filter((i) => i.price === 0).map((i) => i.id))
+    for (const [slot, itemId] of Object.entries(theme.avatarPreset)) {
+      const current = state.avatar.equipped[slot]
+      if (state.avatar.owned.includes(itemId) && current !== itemId && (current === null || free.has(current))) {
+        dispatch({ type: 'AVATAR_EQUIP', slot, itemId })
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme?.id])
 
   // She picks a world on every launch
   if (!theme) return <ThemePicker />

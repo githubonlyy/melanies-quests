@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Coins } from 'lucide-react'
 import { sfx } from './sounds.js'
+import { useTheme } from '../context/ThemeContext.jsx'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -20,12 +20,15 @@ const SPARKS = Array.from({ length: 5 }, (_, i) => {
   }
 })
 
+const isEmoji = (s) => /\p{Extended_Pictographic}/u.test(String(s))
+
 /**
- * Memory board: 6 pairs / 12 vault cards with real 3D flips.
+ * Memory board: 6 pairs / 12 cards with real 3D flips.
  * Match: gold flash + sparkle burst. Mismatch: wobble, flip back.
  * Reports once via onFinish({ pairs, wrongFlips, elapsedSec, timedOut }).
  */
-export default function PairsBoard({ event, pairs, timerSec, onFinish }) {
+export default function PairsBoard({ pairs, timerSec, onFinish }) {
+  const { theme } = useTheme()
   const [cards] = useState(() =>
     shuffle(pairs.flatMap((p) => [
       { key: `${p.id}-a`, pairId: p.id, text: p.a },
@@ -39,7 +42,7 @@ export default function PairsBoard({ event, pairs, timerSec, onFinish }) {
   const [wrongFlips, setWrongFlips] = useState(0)
   const [remaining, setRemaining] = useState(timerSec)
   const lockRef = useRef(false)
-  const startRef = useRef(Date.now())
+  const [startedAt] = useState(() => Date.now())
   const doneRef = useRef(false)
 
   const finish = (timedOut) => {
@@ -48,16 +51,19 @@ export default function PairsBoard({ event, pairs, timerSec, onFinish }) {
     onFinish({
       pairs: matched.size,
       wrongFlips,
-      elapsedSec: Math.round((Date.now() - startRef.current) / 1000),
+      elapsedSec: Math.round((Date.now() - startedAt) / 1000),
       timedOut,
     })
   }
+  // timers call through a ref so they always see the latest matched/wrongFlips
   const finishRef = useRef(finish)
-  finishRef.current = finish
+  useEffect(() => {
+    finishRef.current = finish
+  })
 
   useEffect(() => {
     const iv = setInterval(() => {
-      const left = timerSec - (Date.now() - startRef.current) / 1000
+      const left = timerSec - (Date.now() - startedAt) / 1000
       if (left <= 0) {
         clearInterval(iv)
         finishRef.current(true)
@@ -66,7 +72,7 @@ export default function PairsBoard({ event, pairs, timerSec, onFinish }) {
       }
     }, 250)
     return () => clearInterval(iv)
-  }, [timerSec])
+  }, [timerSec, startedAt])
 
   useEffect(() => {
     if (matched.size === pairs.length) {
@@ -124,7 +130,7 @@ export default function PairsBoard({ event, pairs, timerSec, onFinish }) {
             style={{ width: `${timerPct}%` }}
           ></div>
         </div>
-        <span className="text-white font-black tabular-nums">{matched.size}/{pairs.length}</span>
+        <span className="text-white font-black tabular-nums text-lg">{matched.size}/{pairs.length}</span>
       </div>
 
       <div className="grid grid-cols-3 gap-2.5 md:gap-3 w-full">
@@ -133,28 +139,30 @@ export default function PairsBoard({ event, pairs, timerSec, onFinish }) {
           const isMatched = matched.has(card.pairId)
           const flashing = matchFx === card.pairId
           const wobbling = mismatchFx.includes(card.key)
+          const emoji = isEmoji(card.text)
           return (
             <button
               key={card.key}
               onClick={() => tapCard(card)}
               disabled={isUp}
-              className={`aspect-[4/3] perspective-600 select-none relative ${wobbling ? 'anim-wobble' : ''}`}
+              className={`aspect-[4/3] min-h-20 perspective-600 select-none relative ${wobbling ? 'anim-wobble' : ''}`}
             >
               {/* 3D flipper */}
               <div
                 className="absolute inset-0 preserve-3d transition-transform duration-300"
                 style={{ transform: isUp ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
               >
-                {/* face-down: gold vault card */}
-                <div className="absolute inset-0 backface-hidden rounded-2xl border-b-4 border-amber-700 bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md">
-                  <div className="w-9 h-9 rounded-full bg-amber-300 border-4 border-amber-700/60 flex items-center justify-center">
-                    <Coins size={20} className="text-amber-800 fill-amber-200" />
+                {/* face-down: theme-colored card with the world's emoji */}
+                <div className="absolute inset-0 backface-hidden rounded-2xl border-b-4 border-(--t-side) bg-(--t-accent-deep) flex items-center justify-center shadow-md">
+                  <div className="w-11 h-11 rounded-full bg-white/80 border-4 border-(--t-side)/40 flex items-center justify-center text-2xl leading-none">
+                    {theme?.emoji ?? '✨'}
                   </div>
-                  <span className="absolute inset-1.5 rounded-xl border-2 border-amber-300/50 pointer-events-none"></span>
+                  <span className="absolute inset-1.5 rounded-xl border-2 border-white/40 pointer-events-none"></span>
                 </div>
                 {/* face-up: the value */}
                 <div
-                  className={`absolute inset-0 backface-hidden rounded-2xl border-b-4 flex items-center justify-center p-1.5 font-black text-base md:text-xl shadow-md
+                  className={`absolute inset-0 backface-hidden rounded-2xl border-b-4 flex items-center justify-center p-1.5 font-black shadow-md
+                    ${emoji ? 'text-4xl md:text-5xl' : 'text-xl md:text-3xl'}
                     ${isMatched
                       ? `bg-green-100 border-green-400 text-green-700 ${flashing ? 'anim-gold-flash' : ''}`
                       : wobbling
@@ -185,7 +193,7 @@ export default function PairsBoard({ event, pairs, timerSec, onFinish }) {
         })}
       </div>
 
-      <p className="text-blue-200 font-bold text-sm" dir="rtl">
+      <p className="text-(--t-text-soft) font-bold text-sm" dir="rtl">
         טעויות: <span className="tabular-nums font-black">{wrongFlips}</span>
       </p>
     </div>

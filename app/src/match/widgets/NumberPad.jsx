@@ -2,60 +2,115 @@ import { useState } from 'react'
 import { Delete, Check } from 'lucide-react'
 import { sfx } from '../sounds.js'
 
-// Math answer input: builds a digit string, OK submits
-export default function NumberPad({ question, disabled, onAnswer }) {
+/**
+ * Visual strip for a math exercise: `dots: [a, b]`.
+ * Addition (b >= 0): two colored groups side by side.
+ * Subtraction (b < 0): `a` dots with the last |b| crossed out.
+ */
+export function DotsStrip({ dots }) {
+  if (!dots || dots.length < 2) return null
+  const [a, b] = dots
+  const group = (count, cls, crossFrom = Infinity) => (
+    <div
+      className="grid gap-1 md:gap-1.5"
+      style={{ gridTemplateColumns: `repeat(${Math.min(10, Math.max(1, count))}, minmax(0, 1fr))` }}
+    >
+      {Array.from({ length: count }).map((_, i) => {
+        const crossed = i >= crossFrom
+        return (
+          <span
+            key={i}
+            className={`relative w-6 h-6 md:w-8 md:h-8 rounded-full border-2 ${cls} ${crossed ? 'opacity-40' : ''}`}
+          >
+            {crossed && (
+              <span className="absolute inset-0 flex items-center justify-center text-red-600 font-black text-xl md:text-2xl leading-none opacity-100">
+                ✕
+              </span>
+            )}
+          </span>
+        )
+      })}
+    </div>
+  )
+
+  return (
+    <div className="flex items-center justify-center gap-3 md:gap-4 flex-wrap bg-slate-50 border-4 border-slate-200 rounded-2xl px-4 py-3" dir="ltr">
+      {b >= 0 ? (
+        <>
+          {group(a, 'bg-pink-400 border-pink-600')}
+          <span className="text-3xl font-black text-slate-500">+</span>
+          {group(b, 'bg-sky-400 border-sky-600')}
+        </>
+      ) : (
+        group(a, 'bg-pink-400 border-pink-600', a + b)
+      )}
+    </div>
+  )
+}
+
+// Number answer input: builds a digit string (capped at maxDigits), OK submits.
+export default function NumberPad({ question, disabled, onAnswer, maxDigits = 2 }) {
   const [value, setValue] = useState('')
+  const [result, setResult] = useState(null) // 'ok' | 'bad' once submitted
 
   const press = (d) => {
-    if (disabled || value.length >= 4) return
+    if (disabled || result || value.length >= maxDigits) return
     sfx.click()
     setValue(value + d)
   }
-  const backspace = () => !disabled && setValue(value.slice(0, -1))
+  const backspace = () => {
+    if (disabled || result) return
+    sfx.click()
+    setValue(value.slice(0, -1))
+  }
   const submit = () => {
-    if (disabled || value === '') return
-    onAnswer(value === question.a)
+    if (disabled || result || value === '') return
+    const ok = String(Number(value)) === String(question.a)
+    setResult(ok ? 'ok' : 'bad')
+    onAnswer(ok, ok ? 400 : 700)
   }
 
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+  const keyCls = 'min-h-18 md:min-h-20 rounded-2xl border-b-8 text-4xl font-black transition-all shadow active:border-b-0 active:translate-y-2 disabled:opacity-50 flex items-center justify-center'
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-xs mx-auto">
-      <div className="w-full bg-slate-900 text-yellow-400 font-black text-4xl text-center py-3 rounded-2xl border-4 border-slate-700 shadow-inner min-h-[64px] tracking-widest">
-        {value || <span className="text-slate-600">?</span>}
+    <div className="flex flex-col items-center gap-3 md:gap-4 w-full max-w-sm mx-auto">
+      <div
+        className={`w-full font-black text-5xl md:text-6xl text-center py-2 rounded-2xl border-4 shadow-inner min-h-20 flex items-center justify-center tracking-widest tabular-nums transition-colors
+          ${result === 'ok'
+            ? 'bg-green-100 border-green-400 text-green-700'
+            : result === 'bad'
+              ? 'bg-red-100 border-red-400 text-red-600 anim-shake'
+              : 'bg-slate-900 border-slate-700 text-yellow-400'}`}
+        dir="ltr"
+      >
+        {value || <span className="text-slate-500">?</span>}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 w-full">
+      <div className="grid grid-cols-3 gap-2 md:gap-3 w-full" dir="ltr">
         {keys.map((k) => (
-          <button
-            key={k}
-            onClick={() => press(k)}
-            disabled={disabled}
-            className="bg-white text-slate-800 text-2xl font-black py-3 rounded-xl border-b-4 border-slate-300 active:border-b-0 active:translate-y-1 transition-all shadow disabled:opacity-50"
-          >
+          <button key={k} onClick={() => press(k)} disabled={disabled || !!result} className={`${keyCls} bg-white text-slate-800 border-slate-300`}>
             {k}
           </button>
         ))}
         <button
           onClick={backspace}
-          disabled={disabled}
-          className="bg-red-400 text-white py-3 rounded-xl border-b-4 border-red-600 active:border-b-0 active:translate-y-1 transition-all shadow flex items-center justify-center disabled:opacity-50"
+          disabled={disabled || !!result}
+          className={`${keyCls} bg-rose-400 text-white border-rose-600`}
+          aria-label="מחיקה"
         >
-          <Delete size={26} />
+          <Delete size={32} />
         </button>
-        <button
-          onClick={() => press('0')}
-          disabled={disabled}
-          className="bg-white text-slate-800 text-2xl font-black py-3 rounded-xl border-b-4 border-slate-300 active:border-b-0 active:translate-y-1 transition-all shadow disabled:opacity-50"
-        >
+        <button onClick={() => press('0')} disabled={disabled || !!result} className={`${keyCls} bg-white text-slate-800 border-slate-300`}>
           0
         </button>
         <button
           onClick={submit}
-          disabled={disabled || value === ''}
-          className="bg-green-500 text-white py-3 rounded-xl border-b-4 border-green-700 active:border-b-0 active:translate-y-1 transition-all shadow flex items-center justify-center disabled:opacity-50"
+          disabled={disabled || !!result || value === ''}
+          className={`${keyCls} bg-green-500 text-white border-green-700`}
+          aria-label="אישור"
         >
-          <Check size={26} strokeWidth={3} />
+          <Check size={34} strokeWidth={3.5} />
         </button>
       </div>
     </div>

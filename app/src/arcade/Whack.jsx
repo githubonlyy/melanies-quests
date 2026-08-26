@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bomb, Rat } from 'lucide-react'
 import { sfx } from '../match/sounds.js'
+import { useTheme } from '../context/ThemeContext.jsx'
 import ArcadeShell from './ArcadeShell.jsx'
 
 const ROUND_SEC = 45
 const START_LIVES = 3
 const HOLES = 9
 
-// Mole Smash — moles pop from holes, tap them fast. Don't tap the bombs!
-export default function MoleSmash({ highScore, onClose, onScore, onRestart }) {
+/**
+ * Whack — the theme's `good` emoji pops up from soft round spots; tap it fast.
+ * Don't tap the `bad` one (costs a heart). Tuned gently for a first grader: longer pop-up time, slower cadence, fewer hazards.
+ */
+export default function Whack({ highScore, onClose, onScore, onRestart }) {
+  const { theme } = useTheme()
+  const skin = theme.arcade.whack
   const [hud, setHud] = useState({ score: 0, lives: START_LIVES, time: ROUND_SEC })
   const [active, setActive] = useState(null) // { idx, kind, id }
   const [smashed, setSmashed] = useState(null) // idx just hit (for fx)
@@ -28,7 +33,7 @@ export default function MoleSmash({ highScore, onClose, onScore, onRestart }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // spawner: pop a mole (or bomb) in a random hole, faster over time
+  // spawner: pop a good (or bad) sprite in a random spot, gently faster over time
   useEffect(() => {
     let timeout
     let popId = 0
@@ -36,17 +41,17 @@ export default function MoleSmash({ highScore, onClose, onScore, onRestart }) {
     const spawn = () => {
       if (stateRef.current.done) return
       const elapsed = (Date.now() - start) / 1000
-      const kind = Math.random() < 0.22 ? 'bomb' : 'mole'
+      const kind = Math.random() < 0.18 ? 'bad' : 'good'
       const idx = Math.floor(Math.random() * HOLES)
       const id = ++popId
       setActive({ idx, kind, id })
-      const upFor = Math.max(550, 950 - elapsed * 9)
+      const upFor = Math.max(800, 1300 - elapsed * 8)
       timeout = setTimeout(() => {
         setActive((a) => (a?.id === id ? null : a))
-        timeout = setTimeout(spawn, Math.max(180, 420 - elapsed * 4))
+        timeout = setTimeout(spawn, Math.max(260, 550 - elapsed * 4))
       }, upFor)
     }
-    timeout = setTimeout(spawn, 600)
+    timeout = setTimeout(spawn, 700)
     return () => clearTimeout(timeout)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -65,12 +70,12 @@ export default function MoleSmash({ highScore, onClose, onScore, onRestart }) {
     if (s.done || !active || active.idx !== idx) return
     setSmashed(idx)
     setTimeout(() => setSmashed(null), 250)
-    if (active.kind === 'mole') {
+    if (active.kind === 'good') {
       s.score += 10
       sfx.pop()
     } else {
       s.lives -= 1
-      sfx.thud()
+      sfx.buzz()
       if (s.lives <= 0) {
         setHud((h) => ({ ...h, score: s.score, lives: 0 }))
         setActive(null)
@@ -90,32 +95,30 @@ export default function MoleSmash({ highScore, onClose, onScore, onRestart }) {
   }, [over])
 
   return (
-    <ArcadeShell hud={hud} over={over} highScore={highScore} onClose={onClose} onRestart={onRestart}>
-      <div className="absolute inset-0 bg-gradient-to-b from-green-700 to-green-900 flex items-center justify-center p-4">
+    <ArcadeShell title={skin.title} hud={hud} over={over} highScore={highScore} onClose={onClose} onRestart={onRestart}>
+      <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="grid grid-cols-3 gap-3 md:gap-5 w-full max-w-md">
           {Array.from({ length: HOLES }).map((_, i) => {
             const isUp = active?.idx === i
-            const isBomb = isUp && active.kind === 'bomb'
+            const isBad = isUp && active.kind === 'bad'
             const hit = smashed === i
             return (
               <button
                 key={i}
+                type="button"
                 onPointerDown={() => smash(i)}
-                className="relative aspect-square rounded-full bg-gradient-to-b from-amber-900 to-stone-900 border-b-8 border-black/50 shadow-inner overflow-hidden select-none"
+                aria-label={isUp ? (isBad ? `${skin.bad} — לא לגעת` : `${skin.good} — לתפוס`) : 'ריק'}
+                className="relative aspect-square min-h-16 rounded-full bg-(--t-panel) border-4 border-(--t-panel-border) shadow-inner overflow-hidden select-none"
               >
-                {/* hole shadow */}
-                <span className="absolute inset-x-3 bottom-2 h-4 rounded-full bg-black/50"></span>
+                {/* soft shadow at the bottom of the spot */}
+                <span className="absolute inset-x-4 bottom-3 h-3 rounded-full bg-black/20"></span>
                 {isUp && (
                   <span
-                    className={`absolute inset-2 rounded-full flex items-center justify-center anim-pop border-b-4
-                      ${isBomb
-                        ? 'bg-gradient-to-b from-slate-600 to-slate-800 border-slate-950'
-                        : 'bg-gradient-to-b from-amber-400 to-amber-600 border-amber-800'}
+                    className={`absolute inset-2 rounded-full flex items-center justify-center anim-pop border-b-4 bg-white/95
+                      ${isBad ? 'border-slate-300' : 'border-(--t-accent-deep)'}
                       ${hit ? 'anim-scatter-shake' : ''}`}
                   >
-                    {isBomb
-                      ? <Bomb className="text-white w-1/2 h-1/2" />
-                      : <Rat className="text-amber-950 w-1/2 h-1/2" />}
+                    <span className="text-5xl md:text-6xl leading-none">{isBad ? skin.bad : skin.good}</span>
                   </span>
                 )}
               </button>

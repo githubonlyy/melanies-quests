@@ -1,25 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Calculator, MessageCircle, BookOpen, Map as MapIcon, Coins, Check, X, Sparkles, Gift, Clock, Banknote, FlaskConical, Grid3x3 } from 'lucide-react'
+import { Coins, Check, X, Sparkles, Gift } from 'lucide-react'
 import { EVENTS, MODES } from '../data/events.js'
 import { usePlayer, businessDate } from '../context/PlayerContext.jsx'
 import { sfx } from '../match/sounds.js'
-import LessonDeck from '../match/LessonDeck.jsx'
-
-const ICONS = {
-  math: Calculator,
-  english: MessageCircle,
-  hebrew: BookOpen,
-  geography: MapIcon,
-  clock: Clock,
-  money: Banknote,
-  science: FlaskConical,
-  times: Grid3x3,
-}
+import { speak } from '../match/speak.js'
 
 export default function EventBoard({ onStartMatch }) {
-  const { state, dispatch, playedToday, lessonReadToday, config } = usePlayer()
+  const { state, playedToday, config } = usePlayer()
   const [preview, setPreview] = useState(null) // event shown in the pre-match modal
-  const [lesson, setLesson] = useState(null) // event whose daily lesson cards are open
   const [chestOpen, setChestOpen] = useState(false)
 
   const goal = config.dailyGoal
@@ -27,32 +15,39 @@ export default function EventBoard({ onStartMatch }) {
   const goalDone = Math.min(doneCount, goal)
   const chestReady = doneCount >= goal
   const chestClaimed = state.chestClaimed === businessDate()
+  // 8 questions × 10 coins + win bonus
+  const maxCoins = config.questionsPerMatch * config.coinsPerCorrect + config.winBonusCoins
+
+  const openPreview = (event) => {
+    sfx.click()
+    setPreview(event)
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-blue-900/50 p-4 rounded-2xl border-4 border-blue-900 backdrop-blur-sm">
-        <h2 className="text-2xl md:text-3xl font-black text-white italic tracking-wide uppercase drop-shadow-md">Daily Events</h2>
-        <div className="px-3 py-1.5 bg-green-500 text-white rounded-xl border-b-4 border-green-700 font-bold text-sm uppercase flex items-center gap-1">
-          <Check size={16} strokeWidth={3} /> New Events
+      <div className="flex justify-between items-center bg-(--t-panel) p-4 rounded-2xl border-4 border-(--t-panel-border) backdrop-blur-sm">
+        <h2 className="text-2xl md:text-3xl font-black text-white tracking-wide drop-shadow-md">המשימות של היום</h2>
+        <div className="px-3 py-1.5 bg-green-500 text-white rounded-xl border-b-4 border-green-700 font-bold text-sm flex items-center gap-1">
+          <Check size={16} strokeWidth={3} /> משימות חדשות
         </div>
       </div>
 
       {/* DAILY CHEST STRIP */}
-      <div className="flex items-center gap-3 bg-blue-900/50 p-3 md:p-4 rounded-2xl border-4 border-blue-900 backdrop-blur-sm">
+      <div className="flex items-center gap-3 bg-(--t-panel) p-3 md:p-4 rounded-2xl border-4 border-(--t-panel-border) backdrop-blur-sm">
         <button
           onClick={() => chestReady && !chestClaimed && setChestOpen(true)}
           disabled={!chestReady || chestClaimed}
-          className={`shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-2xl border-b-4 flex items-center justify-center transition-all
+          className={`shrink-0 w-16 h-16 md:w-18 md:h-18 rounded-2xl border-b-4 flex items-center justify-center transition-all
             ${chestClaimed
               ? 'bg-green-500 border-green-700'
               : chestReady
                 ? 'bg-yellow-400 border-yellow-600 anim-ready-pulse cursor-pointer shadow-[0_0_18px_rgba(250,204,21,0.7)]'
-                : 'bg-blue-950 border-blue-900'}`}
-          aria-label="Daily chest"
+                : 'bg-black/30 border-(--t-side-deep)'}`}
+          aria-label="תיבת האוצר היומית"
         >
           {chestClaimed
-            ? <Check size={30} strokeWidth={3.5} className="text-white" />
-            : <Gift size={30} className={chestReady ? 'text-yellow-900' : 'text-blue-700'} />}
+            ? <Check size={32} strokeWidth={3.5} className="text-white" />
+            : <Gift size={32} className={chestReady ? 'text-yellow-900' : 'text-(--t-text-soft)'} />}
         </button>
         <div className="flex-1" dir="rtl">
           <p className="text-white font-black leading-tight">
@@ -62,11 +57,11 @@ export default function EventBoard({ onStartMatch }) {
                 ? 'תיבת האוצר מוכנה — פתחו אותה!'
                 : `שחקו ${goal} משימות שונות היום — ${goalDone}/${goal}`}
           </p>
-          <div className="flex gap-1.5 mt-1.5" dir="ltr">
+          <div className="flex gap-1.5 mt-1.5">
             {Array.from({ length: goal }).map((_, i) => (
               <span
                 key={i}
-                className={`h-2.5 flex-1 max-w-16 rounded-full ${i < goalDone ? 'bg-yellow-400' : 'bg-blue-950'}`}
+                className={`h-2.5 flex-1 max-w-16 rounded-full ${i < goalDone ? 'bg-yellow-400' : 'bg-black/30'}`}
               ></span>
             ))}
           </div>
@@ -75,59 +70,45 @@ export default function EventBoard({ onStartMatch }) {
 
       {chestOpen && <ChestModal onClose={() => setChestOpen(false)} />}
 
-      {/* DAILY LESSON CARDS — gate before the first play of a subject each day */}
-      {lesson && (
-        <LessonDeck
-          event={lesson}
-          onDone={() => {
-            dispatch({ type: 'LESSON_READ', eventId: lesson.id })
-            setLesson(null)
-            setPreview(lesson)
-          }}
-          onClose={() => setLesson(null)}
-        />
-      )}
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
         {EVENTS.map((event) => {
-          const Icon = ICONS[event.id]
           const practice = playedToday(event.id)
           return (
             <div
               key={event.id}
-              onClick={() => (lessonReadToday(event.id) ? setPreview(event) : setLesson(event))}
+              onClick={() => openPreview(event)}
               className={`group relative ${event.color} rounded-3xl border-b-8 ${event.borderColor} cursor-pointer hover:-translate-y-2 active:translate-y-2 active:border-b-0 transition-all duration-200 shadow-xl`}
             >
               <div className="bg-white m-1.5 rounded-[1.25rem] h-[calc(100%-12px)] flex flex-col overflow-hidden relative">
                 <div className={`${event.headerColor} p-2 text-center border-b-4 border-black/10`}>
-                  <span className="text-white font-black uppercase text-sm tracking-wider drop-shadow-sm">
+                  <span className="text-white font-black text-sm tracking-wider drop-shadow-sm">
                     {event.type}
                   </span>
                 </div>
 
                 <div className="p-4 md:p-6 pb-12 md:pb-14 flex items-start gap-3 md:gap-4 flex-1">
-                  <div className={`p-2.5 md:p-3 rounded-2xl bg-slate-100 border-4 ${event.borderColor} shadow-inner -rotate-3 group-hover:rotate-0 transition-transform`}>
-                    <Icon className={`${event.textColor} w-10 h-10 md:w-12 md:h-12`} />
+                  <div className={`w-18 h-18 md:w-22 md:h-22 shrink-0 rounded-2xl bg-slate-100 border-4 ${event.borderColor} shadow-inner rotate-3 group-hover:rotate-0 transition-transform flex items-center justify-center text-5xl md:text-6xl leading-none`}>
+                    {event.emoji}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-tight mb-2">
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2">
                       {event.title}
                     </h3>
-                    <div className="bg-slate-100 p-2 rounded-xl border-2 border-slate-200" dir="rtl">
-                      <p className="font-bold text-slate-600 text-sm">{event.description}</p>
+                    <div className="bg-slate-100 p-2 rounded-xl border-2 border-slate-200">
+                      <p className="font-bold text-slate-600 text-sm md:text-base">{event.description}</p>
                     </div>
                   </div>
                 </div>
 
                 {practice ? (
-                  <div className="absolute bottom-4 right-4 bg-blue-100 px-3 py-1 rounded-full border-2 border-blue-300 flex items-center gap-1 shadow-md">
+                  <div className="absolute bottom-4 left-4 bg-blue-100 px-3 py-1 rounded-full border-2 border-blue-300 flex items-center gap-1 shadow-md">
                     <Sparkles className="text-blue-600" size={14} />
-                    <span className="font-black text-blue-600 text-sm">PRACTICE · XP</span>
+                    <span className="font-black text-blue-600 text-sm">אימון · XP</span>
                   </div>
                 ) : (
-                  <div className="absolute bottom-4 right-4 bg-yellow-400 px-3 py-1 rounded-full border-2 border-yellow-600 flex items-center gap-1 shadow-md">
+                  <div className="absolute bottom-4 left-4 bg-yellow-400 px-3 py-1 rounded-full border-2 border-yellow-600 flex items-center gap-1 shadow-md">
                     <Coins className="text-yellow-900 fill-current" size={14} />
-                    <span className="font-black text-yellow-900 text-sm">עד 200+</span>
+                    <span className="font-black text-yellow-900 text-sm">עד {maxCoins}+</span>
                   </div>
                 )}
               </div>
@@ -136,76 +117,94 @@ export default function EventBoard({ onStartMatch }) {
         })}
       </div>
 
-      {/* CHEST + PRE-MATCH MODALS below */}
-      {/* PRE-MATCH MODAL */}
-      {preview && (() => {
-        const Icon = ICONS[preview.id]
-        const practice = playedToday(preview.id)
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-950/90 backdrop-blur-sm p-4">
-            <div className="anim-zoom-in bg-white rounded-3xl border-8 border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-xl overflow-hidden flex flex-col relative">
-              <div className={`p-6 text-center relative border-b-8 border-black/10 ${preview.headerColor}`}>
-                <button
-                  onClick={() => setPreview(null)}
-                  className="absolute top-4 right-4 w-10 h-10 bg-black/20 hover:bg-black/30 text-white rounded-full flex items-center justify-center transition-colors"
-                >
-                  <X size={24} strokeWidth={3} />
-                </button>
-                <div className="w-24 h-24 mx-auto bg-white rounded-2xl border-4 border-slate-200 flex items-center justify-center mb-2 shadow-lg rotate-3">
-                  <Icon className={`${preview.textColor} w-12 h-12`} />
-                </div>
-                <h2 className="text-3xl font-black text-white uppercase tracking-wide drop-shadow-md italic mt-2">
-                  {preview.title}
-                </h2>
-              </div>
+      {preview && (
+        <PreviewModal
+          event={preview}
+          practice={playedToday(preview.id)}
+          onClose={() => setPreview(null)}
+          onStart={(mode) => { setPreview(null); onStartMatch(preview, mode) }}
+        />
+      )}
+    </div>
+  )
+}
 
-              <div className="p-5 md:p-8 flex flex-col items-center text-center bg-slate-50">
-                <div className="inline-block px-4 py-1 bg-slate-200 rounded-full font-bold text-slate-500 uppercase tracking-wider text-sm mb-4">
-                  {preview.type}
-                </div>
-                <p className="text-lg font-bold text-slate-700 mb-6 max-w-md leading-relaxed" dir="rtl">
-                  {preview.description}
-                </p>
+/* ---------- PRE-MATCH MODAL ---------- */
 
-                {practice && (
-                  <div className="bg-blue-50 border-4 border-blue-200 rounded-2xl px-4 py-3 mb-6 w-full" dir="rtl">
-                    <p className="font-bold text-blue-700 text-sm">
-                      כבר שיחקת היום! משחק חוזר = אימון: נקודות XP בלבד, בלי מטבעות.
-                    </p>
-                  </div>
-                )}
+const MODE_STYLES = {
+  balloon: 'bg-orange-400 hover:bg-orange-300 border-orange-600',
+  pairs: 'bg-indigo-500 hover:bg-indigo-400 border-indigo-700',
+}
 
-                <button
-                  onClick={() => { setPreview(null); setLesson(preview) }}
-                  className="flex items-center gap-1.5 text-sm font-black text-slate-400 hover:text-slate-600 uppercase mb-3 transition-colors"
-                >
-                  <BookOpen size={16} /> למדו שוב
-                </button>
+function PreviewModal({ event, practice, onClose, onStart }) {
+  // she can't read the description — say it
+  useEffect(() => {
+    speak(`${event.title}. ${event.description}`, { delay: 200 })
+  }, [event])
 
-                {/* game mode picker */}
-                <div className="w-full space-y-3">
-                  <button
-                    onClick={() => { setPreview(null); onStartMatch(preview, 'classic') }}
-                    className="w-full bg-green-500 hover:bg-green-400 text-white text-2xl font-black italic uppercase py-4 rounded-2xl border-b-8 border-green-700 active:border-b-0 active:translate-y-2 transition-all shadow-lg"
-                  >
-                    PLAY! · {preview.title}
-                  </button>
-                  {preview.modes.filter((m) => m !== 'classic').map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => { setPreview(null); onStartMatch(preview, m) }}
-                      className={`w-full ${m === 'balloon' ? 'bg-orange-400 hover:bg-orange-300 border-orange-600' : 'bg-indigo-500 hover:bg-indigo-400 border-indigo-700'} text-white font-black italic uppercase py-3 rounded-2xl border-b-8 active:border-b-0 active:translate-y-2 transition-all shadow-lg flex flex-col items-center leading-tight`}
-                    >
-                      <span className="text-xl">{MODES[m].label}</span>
-                      <span className="text-xs font-bold normal-case not-italic opacity-90" dir="rtl">{MODES[m].heLabel}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--t-overlay) backdrop-blur-sm p-4">
+      <div className="anim-zoom-in bg-white rounded-3xl border-8 border-(--t-side-deep) shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-xl overflow-hidden flex flex-col relative">
+        <div className={`p-6 text-center relative border-b-8 border-black/10 ${event.headerColor}`}>
+          <button
+            onClick={onClose}
+            aria-label="סגירה"
+            className="absolute top-4 left-4 w-12 h-12 bg-black/20 hover:bg-black/30 text-white rounded-full flex items-center justify-center transition-colors"
+          >
+            <X size={24} strokeWidth={3} />
+          </button>
+          <div className="w-24 h-24 mx-auto bg-white rounded-2xl border-4 border-slate-200 flex items-center justify-center mb-2 shadow-lg rotate-3 text-6xl leading-none">
+            {event.emoji}
           </div>
-        )
-      })()}
+          <h2 className="text-3xl font-black text-white tracking-wide drop-shadow-md mt-2">
+            {event.title}
+          </h2>
+        </div>
+
+        <div className="p-5 md:p-8 flex flex-col items-center text-center bg-slate-50">
+          <div className="inline-block px-4 py-1 bg-slate-200 rounded-full font-bold text-slate-500 tracking-wider text-sm mb-4">
+            {event.type}
+          </div>
+          <div className="flex items-center gap-3 mb-6 max-w-md">
+            <button
+              onClick={() => speak(event.description)}
+              aria-label="להשמיע שוב"
+              className="w-12 h-12 shrink-0 rounded-full bg-(--t-accent-deep) border-b-4 border-(--t-side) text-2xl flex items-center justify-center active:border-b-0 active:translate-y-1 transition-all"
+            >
+              🔊
+            </button>
+            <p className="text-lg font-bold text-slate-700 leading-relaxed">{event.description}</p>
+          </div>
+
+          {practice && (
+            <div className="bg-blue-50 border-4 border-blue-200 rounded-2xl px-4 py-3 mb-6 w-full">
+              <p className="font-bold text-blue-700 text-sm">
+                כבר שיחקת היום! משחק חוזר = אימון: נקודות XP בלבד, בלי מטבעות.
+              </p>
+            </div>
+          )}
+
+          {/* game mode picker */}
+          <div className="w-full space-y-3">
+            <button
+              onClick={() => onStart('classic')}
+              className="w-full bg-green-500 hover:bg-green-400 text-white text-2xl font-black py-4 rounded-2xl border-b-8 border-green-700 active:border-b-0 active:translate-y-2 transition-all shadow-lg"
+            >
+              יאללה, משחקים! {event.emoji}
+            </button>
+            {event.modes.filter((m) => m !== 'classic').map((m) => (
+              <button
+                key={m}
+                onClick={() => onStart(m)}
+                className={`w-full ${MODE_STYLES[m] ?? 'bg-slate-500 border-slate-700'} text-white font-black py-3 rounded-2xl border-b-8 active:border-b-0 active:translate-y-2 transition-all shadow-lg flex flex-col items-center leading-tight`}
+              >
+                <span className="text-xl">{m === 'balloon' ? '🎈' : '🃏'} {MODES[m].label}</span>
+                <span className="text-xs font-bold opacity-90">{MODES[m].heLabel}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -234,16 +233,17 @@ function ChestModal({ onClose }) {
       dispatch({ type: 'CHEST_CLAIM', amount: config.dailyChestCoins })
       sfx.pop()
       sfx.fanfare()
+      speak(`כל הכבוד! סיימת את כל המשימות של היום. קיבלת ${config.dailyChestCoins} מטבעות!`, { delay: 300 })
     }, 600)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-950/90 backdrop-blur-sm p-4">
-      <div className="anim-zoom-in bg-white rounded-3xl border-8 border-slate-800 shadow-2xl w-full max-w-sm overflow-hidden text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--t-overlay) backdrop-blur-sm p-4">
+      <div className="anim-zoom-in bg-white rounded-3xl border-8 border-(--t-side-deep) shadow-2xl w-full max-w-sm overflow-hidden text-center">
         <div className="p-4 bg-gradient-to-br from-yellow-300 to-amber-500 border-b-8 border-black/10">
-          <h2 className="text-3xl font-black text-white uppercase italic drop-shadow-md">Daily Chest!</h2>
+          <h2 className="text-3xl font-black text-white drop-shadow-md">תיבת האוצר!</h2>
         </div>
 
         <div className="p-8 flex flex-col items-center gap-5 bg-slate-50">
@@ -266,34 +266,34 @@ function ChestModal({ onClose }) {
               <div className="absolute left-3 right-3 top-8 bottom-2 rounded-xl bg-gradient-to-t from-amber-400 to-yellow-200 anim-vault-glow"></div>
             )}
             {/* body */}
-            <div className="absolute left-0 right-0 bottom-0 h-20 rounded-b-2xl rounded-t-md bg-gradient-to-b from-amber-600 to-amber-800 border-4 border-amber-900 z-10">
-              <div className="absolute left-1/2 -ml-3 top-2 w-6 h-7 bg-yellow-400 border-4 border-amber-900 rounded-md"></div>
+            <div className="absolute left-0 right-0 bottom-0 h-20 rounded-b-2xl rounded-t-md bg-gradient-to-b from-pink-500 to-fuchsia-700 border-4 border-fuchsia-900 z-10">
+              <div className="absolute left-1/2 -ml-3 top-2 w-6 h-7 bg-yellow-400 border-4 border-fuchsia-900 rounded-md"></div>
             </div>
             {/* lid */}
-            <div className={`absolute left-0 right-0 top-4 h-12 rounded-t-2xl bg-gradient-to-b from-amber-500 to-amber-700 border-4 border-amber-900 z-10 ${opened ? 'anim-chest-lid' : ''}`}>
-              <div className="absolute inset-x-2 top-1.5 h-1.5 rounded bg-amber-300/50"></div>
+            <div className={`absolute left-0 right-0 top-4 h-12 rounded-t-2xl bg-gradient-to-b from-pink-300 to-pink-500 border-4 border-fuchsia-900 z-10 ${opened ? 'anim-chest-lid' : ''}`}>
+              <div className="absolute inset-x-2 top-1.5 h-1.5 rounded bg-white/50"></div>
             </div>
           </div>
 
           {opened ? (
-            <div className="anim-pop flex items-center gap-2 bg-yellow-100 border-4 border-yellow-400 rounded-2xl px-6 py-2">
+            <div className="anim-pop flex items-center gap-2 bg-yellow-100 border-4 border-yellow-400 rounded-2xl px-6 py-2" dir="ltr">
               <Coins size={26} className="text-yellow-600 fill-yellow-300" />
               <span className="text-3xl font-black text-yellow-700 tabular-nums">+{config.dailyChestCoins}</span>
             </div>
           ) : (
-            <p className="font-black text-slate-400 uppercase tracking-widest">...נפתח</p>
+            <p className="font-black text-slate-400 tracking-widest">נפתח…</p>
           )}
 
-          <p className="font-bold text-slate-600" dir="rtl">
+          <p className="font-bold text-slate-600">
             כל הכבוד! סיימת את כל המשימות של היום 🎉
           </p>
 
           <button
             onClick={onClose}
             disabled={!opened}
-            className="w-full bg-green-500 hover:bg-green-400 text-white text-xl font-black italic uppercase py-3 rounded-2xl border-b-8 border-green-700 active:border-b-0 active:translate-y-2 transition-all disabled:opacity-50"
+            className="w-full bg-green-500 hover:bg-green-400 text-white text-xl font-black py-3 rounded-2xl border-b-8 border-green-700 active:border-b-0 active:translate-y-2 transition-all disabled:opacity-50"
           >
-            YES!
+            יש! 🎉
           </button>
         </div>
       </div>

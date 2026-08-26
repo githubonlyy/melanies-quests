@@ -16,9 +16,9 @@ New-Item -ItemType File .nojekyll -Force | Out-Null
 git init --quiet
 git checkout -B gh-pages --quiet
 git add -A
-git commit -m "Deploy Tommy's Quests build" --quiet
-git push --force --quiet "https://github.com/githubonlyy/tommys-quests.git" gh-pages
+git commit -m "Deploy Melanie's Quests build" --quiet
+git push --force --quiet "https://github.com/githubonlyy/melanies-quests.git" gh-pages
 Set-Location $root
 Remove-Item -Recurse -Force "$root\app\dist\.git" -Confirm:$false
 
-Write-Host "Deployed: https://githubonlyy.github.io/tommys-quests/" -ForegroundColor Green
+Write-Host "Deployed: https://githubonlyy.github.io/melanies-quests/" -ForegroundColor Green
