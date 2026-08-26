@@ -1,0 +1,24 @@
+{
+  "defaultPin": "1234",
+  "questionsPerMatch": 8,
+  "questionTimerSec": 0,
+  "speedThresholdSec": 0,
+  "coinsPerCorrect": 10,
+  "speedBonusCoins": 0,
+  "winBonusCoins": 50,
+  "winThreshold": 6,
+  "drawThreshold": 4,
+  "xpPerCorrect": 10,
+  "dailyResetHour": 5,
+  "pinLockoutTries": 3,
+  "pinLockoutSec": 60,
+  "dailyChestCoins": 100,
+  "dailyGoal": 3,
+  "pairs": {
+    "pairCount": 6,
+    "coinsPerPair": 15,
+    "xpPerPair": 15,
+    "timerSec": 150,
+    "maxWrongForWin": 6
+  }
+}

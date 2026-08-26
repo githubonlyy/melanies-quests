@@ -1,0 +1,15 @@
+[
+  { "id": "skin-light", "slot": "skin", "name": "עור בהיר", "theme": "all", "price": 0, "rarity": "FREE", "variant": "light", "colors": { "skin": "#fcd9c4" } },
+  { "id": "hair-long-blonde", "slot": "hair", "name": "שיער ארוך בלונדיני", "theme": "all", "price": 0, "rarity": "FREE", "variant": "long", "colors": { "hair": "#f7d774" } },
+  { "id": "dress-basic", "slot": "dress", "name": "שמלה פשוטה", "theme": "all", "price": 0, "rarity": "FREE", "variant": "plain", "colors": { "main": "#f472b6" } },
+  { "id": "shoes-basic", "slot": "shoes", "name": "נעליים", "theme": "all", "price": 0, "rarity": "FREE", "variant": "flat", "colors": { "main": "#ffffff" } },
+  { "id": "dress-pink-gown", "slot": "dress", "name": "שמלת נשף ורודה", "theme": "barbie", "price": 400, "rarity": "RARE", "variant": "gown", "colors": { "main": "#ff4fb3" } },
+  { "id": "head-tiara", "slot": "head", "name": "טיארה", "theme": "barbie", "price": 300, "rarity": "RARE", "variant": "tiara", "colors": { "main": "#facc15" } },
+  { "id": "hair-rainbow", "slot": "hair", "name": "שיער קשת", "theme": "unicorn", "price": 500, "rarity": "EPIC", "variant": "long", "colors": { "hair": "#c084fc" } },
+  { "id": "dress-rainbow", "slot": "dress", "name": "שמלת קשת", "theme": "unicorn", "price": 400, "rarity": "RARE", "variant": "gown", "colors": { "main": "#60a5fa" } },
+  { "id": "head-horn", "slot": "head", "name": "קרן חד-קרן", "theme": "unicorn", "price": 300, "rarity": "RARE", "variant": "horn", "colors": { "main": "#fde68a" } },
+  { "id": "back-wings", "slot": "back", "name": "כנפיים", "theme": "unicorn", "price": 600, "rarity": "EPIC", "variant": "wings", "colors": { "main": "#e9d5ff" } },
+  { "id": "hair-braids", "slot": "hair", "name": "צמות", "theme": "flowers", "price": 350, "rarity": "RARE", "variant": "braids", "colors": { "hair": "#92400e" } },
+  { "id": "dress-floral", "slot": "dress", "name": "שמלה פרחונית", "theme": "flowers", "price": 400, "rarity": "RARE", "variant": "sundress", "colors": { "main": "#fda4af" } },
+  { "id": "head-flower-crown", "slot": "head", "name": "זר פרחים", "theme": "flowers", "price": 300, "rarity": "RARE", "variant": "flowercrown", "colors": { "main": "#f9a8d4" } }
+]
