@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Coins, Volume2, Check, Lock } from 'lucide-react'
 import wardrobe from '../data/wardrobe.json'
-import { usePlayer, REQUIRED_SLOTS } from '../context/PlayerContext.jsx'
+import { usePlayer, REQUIRED_SLOTS, getEquipped } from '../context/PlayerContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { useToast } from '../App.jsx'
 import { speak } from '../match/speak.js'
@@ -55,7 +55,9 @@ export default function Closet() {
     speak(GREETING, { delay: 300 })
   }, [])
 
-  const { owned, equipped } = state.avatar
+  const themeId = theme.id
+  const { owned } = state.avatar
+  const equipped = getEquipped(state, themeId) // this world's outfit
   const optional = !REQUIRED_SLOTS.includes(slot)
   const slotMeta = SLOTS.find((s) => s.id === slot)
   const current = getItem(equipped[slot])
@@ -85,20 +87,20 @@ export default function Closet() {
       setBuying(item)
       return
     }
-    if (equipped[slot] !== item.id) dispatch({ type: 'AVATAR_EQUIP', slot, itemId: item.id })
+    if (equipped[slot] !== item.id) dispatch({ type: 'AVATAR_EQUIP', themeId, slot, itemId: item.id })
   }
 
   const onTapNone = () => {
     if (!tapOk()) return
     sfx.click()
     speak('בלי')
-    if (equipped[slot] !== null) dispatch({ type: 'AVATAR_EQUIP', slot, itemId: null })
+    if (equipped[slot] !== null) dispatch({ type: 'AVATAR_EQUIP', themeId, slot, itemId: null })
   }
 
   const confirmBuy = () => {
     if (!buying || !acceptTap(lastBuyRef, 800)) return
     if (state.coins >= buying.price) {
-      dispatch({ type: 'WARDROBE_BUY', item: buying })
+      dispatch({ type: 'WARDROBE_BUY', themeId, item: buying })
       sfx.fanfare()
       showToast(`${buying.name} שלך!`, 'success')
     } else {

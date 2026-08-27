@@ -1,12 +1,13 @@
 import { useEffect, useState, createContext, useContext } from 'react'
-import { Gamepad2, Store, BarChart3, Trophy, Coins, Lock, Flame, Music, Joystick, Shirt, Palette, Volume2, VolumeX, Heart } from 'lucide-react'
-import { usePlayer, levelCost } from './context/PlayerContext.jsx'
+import { Gamepad2, Store, BarChart3, Trophy, Coins, Lock, Flame, Music, Joystick, Shirt, Palette, Volume2, VolumeX, Heart, Sparkles } from 'lucide-react'
+import { usePlayer, levelCost, getEquipped } from './context/PlayerContext.jsx'
 import { useTheme } from './context/ThemeContext.jsx'
 import { playMusic, stopMusic, isMusicOn, setMusicOn } from './match/music.js'
 import { isSpeechOn, setSpeechOn, speak } from './match/speak.js'
 import ThemePicker from './screens/ThemePicker.jsx'
 import EventBoard from './screens/EventBoard.jsx'
 import Closet from './screens/Closet.jsx'
+import World from './screens/World.jsx'
 import Shop from './screens/Shop.jsx'
 import Trophies from './screens/Trophies.jsx'
 import Arcade from './screens/Arcade.jsx'
@@ -22,6 +23,7 @@ export const useToast = () => useContext(ToastContext)
 const TABS = [
   { id: 'events', label: 'משימות', Icon: Gamepad2, color: 'bg-green-500', active: 'text-green-300' },
   { id: 'closet', label: 'ארון', Icon: Shirt, color: 'bg-pink-500', active: 'text-pink-300' },
+  { id: 'world', label: 'העולם שלי', Icon: Sparkles, color: 'bg-fuchsia-500', active: 'text-fuchsia-300' },
   { id: 'rewards', label: 'פרסים', Icon: Store, color: 'bg-purple-500', active: 'text-purple-300' },
   { id: 'arcade', label: 'משחקים', Icon: Joystick, color: 'bg-sky-500', active: 'text-sky-300' },
   { id: 'trophies', label: 'גביעים', Icon: Trophy, color: 'bg-yellow-500', active: 'text-yellow-300' },
@@ -96,10 +98,11 @@ export default function App() {
   useEffect(() => {
     if (!theme) return
     const free = new Set(wardrobe.filter((i) => i.price === 0).map((i) => i.id))
+    const equipped = getEquipped(state, theme.id)
     for (const [slot, itemId] of Object.entries(theme.avatarPreset)) {
-      const current = state.avatar.equipped[slot]
+      const current = equipped[slot]
       if (state.avatar.owned.includes(itemId) && current !== itemId && (current === null || free.has(current))) {
-        dispatch({ type: 'AVATAR_EQUIP', slot, itemId })
+        dispatch({ type: 'AVATAR_EQUIP', themeId: theme.id, slot, itemId })
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -233,6 +236,7 @@ export default function App() {
                 />
               )}
               {activeTab === 'closet' && <Closet />}
+              {activeTab === 'world' && <World />}
               {activeTab === 'rewards' && <Shop />}
               {activeTab === 'arcade' && <Arcade />}
               {activeTab === 'trophies' && <Trophies />}
@@ -243,7 +247,7 @@ export default function App() {
 
         {/* BOTTOM NAV — phones only */}
         <nav
-          className="md:hidden shrink-0 grid grid-cols-6 bg-(--t-side) border-t-4 border-(--t-side-deep) z-20 shadow-[0_-4px_12px_rgba(0,0,0,0.3)]"
+          className="md:hidden shrink-0 grid grid-cols-7 bg-(--t-side) border-t-4 border-(--t-side-deep) z-20 shadow-[0_-4px_12px_rgba(0,0,0,0.3)]"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           {TABS.map((t) => (

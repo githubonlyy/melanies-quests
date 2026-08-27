@@ -7,6 +7,7 @@ import {
   businessDate,
   defaultAvatar,
   repairAvatar,
+  getEquipped,
   AVATAR_SLOTS,
   REQUIRED_SLOTS,
 } from '../context/PlayerContext.jsx'
@@ -172,12 +173,21 @@ describe('BUY (real-world rewards)', () => {
 })
 
 describe('avatar defaults', () => {
-  it('owns every free wardrobe item and fills required slots', () => {
+  it('owns every free wardrobe item and fills required slots in every world', () => {
     const a = defaultAvatar()
     const free = wardrobe.filter((i) => i.price === 0).map((i) => i.id)
     expect(a.owned).toEqual(free)
-    for (const slot of REQUIRED_SLOTS) expect(a.equipped[slot], slot).toBeTruthy()
-    for (const slot of AVATAR_SLOTS) expect(slot in a.equipped).toBe(true)
+    for (const id of THEME_IDS) {
+      for (const slot of REQUIRED_SLOTS) expect(a.equippedByTheme[id][slot], `${id} ${slot}`).toBeTruthy()
+      for (const slot of AVATAR_SLOTS) expect(slot in a.equippedByTheme[id]).toBe(true)
+    }
+  })
+
+  it('each world starts with a different outfit (theme-tagged free items win)', () => {
+    const a = defaultAvatar()
+    const dresses = THEME_IDS.map((id) => a.equippedByTheme[id].dress)
+    expect(new Set(dresses).size).toBe(THEME_IDS.length)
+    expect(wardrobe.find((i) => i.id === a.equippedByTheme.unicorn.dress).theme).toBe('unicorn')
   })
 
   it('wardrobe has at least one free item per required slot', () => {
@@ -197,12 +207,13 @@ describe('WARDROBE_BUY / AVATAR_EQUIP', () => {
   const dress = { id: 'test-dress', slot: 'dress', name: 'שמלת בדיקה', price: 300 }
   const crown = { id: 'test-crown', slot: 'head', name: 'כתר בדיקה', price: 200 }
 
-  it('buy deducts, owns, equips immediately, logs 👗', () => {
+  it('buy deducts, owns, equips immediately in that world only, logs 👗', () => {
     let s = { ...fresh(), coins: 500 }
-    s = reducer(s, { type: 'WARDROBE_BUY', item: dress })
+    s = reducer(s, { type: 'WARDROBE_BUY', themeId: 'unicorn', item: dress })
     expect(s.coins).toBe(200)
     expect(s.avatar.owned).toContain('test-dress')
-    expect(s.avatar.equipped.dress).toBe('test-dress')
+    expect(getEquipped(s, 'unicorn').dress).toBe('test-dress')
+    expect(getEquipped(s, 'barbie').dress).not.toBe('test-dress')
     expect(s.purchases[0]).toMatchObject({ title: '👗 שמלת בדיקה', cost: 300, kind: 'wardrobe' })
   })
 
@@ -214,18 +225,24 @@ describe('WARDROBE_BUY / AVATAR_EQUIP', () => {
     expect(reducer(poor, { type: 'WARDROBE_BUY', item: dress })).toBe(poor)
   })
 
-  it('equip only owned items; required slots cannot be emptied; optional can', () => {
+  it('equip only owned items; required slots cannot be emptied; optional can; worlds independent', () => {
     let s = { ...fresh(), coins: 1000 }
     const before = s
-    expect(reducer(s, { type: 'AVATAR_EQUIP', slot: 'dress', itemId: 'test-dress' })).toBe(before) // not owned
-    s = reducer(s, { type: 'WARDROBE_BUY', item: dress })
-    s = reducer(s, { type: 'WARDROBE_BUY', item: crown })
-    const firstDress = defaultAvatar().equipped.dress
-    s = reducer(s, { type: 'AVATAR_EQUIP', slot: 'dress', itemId: firstDress })
-    expect(s.avatar.equipped.dress).toBe(firstDress)
-    expect(reducer(s, { type: 'AVATAR_EQUIP', slot: 'dress', itemId: null })).toBe(s)
-    s = reducer(s, { type: 'AVATAR_EQUIP', slot: 'head', itemId: null })
-    expect(s.avatar.equipped.head).toBeNull()
+    expect(reducer(s, { type: 'AVATAR_EQUIP', themeId: 'barbie', slot: 'dress', itemId: 'test-dress' })).toBe(before) // not owned
+    s = reducer(s, { type: 'WARDROBE_BUY', themeId: 'barbie', item: dress })
+    s = reducer(s, { type: 'WARDROBE_BUY', themeId: 'barbie', item: crown })
+    // an owned item can be worn in another world too
+    s = reducer(s, { type: 'AVATAR_EQUIP', themeId: 'flowers', slot: 'head', itemId: 'test-crown' })
+    expect(getEquipped(s, 'flowers').head).toBe('test-crown')
+    expect(getEquipped(s, 'unicorn').head).toBeNull()
+    const firstDress = defaultAvatar().equippedByTheme.barbie.dress
+    s = reducer(s, { type: 'AVATAR_EQUIP', themeId: 'barbie', slot: 'dress', itemId: firstDress })
+    expect(getEquipped(s, 'barbie').dress).toBe(firstDress)
+    expect(reducer(s, { type: 'AVATAR_EQUIP', themeId: 'barbie', slot: 'dress', itemId: null })).toBe(s)
+    s = reducer(s, { type: 'AVATAR_EQUIP', themeId: 'barbie', slot: 'head', itemId: null })
+    expect(getEquipped(s, 'barbie').head).toBeNull()
+    // unknown world falls back to the default one instead of crashing
+    expect(reducer(s, { type: 'AVATAR_EQUIP', themeId: 'nope', slot: 'head', itemId: 'test-crown' }).avatar.equippedByTheme[DEFAULT_THEME].head).toBe('test-crown')
   })
 
   it('fashionista trophy after 5 bought items', () => {
@@ -234,14 +251,19 @@ describe('WARDROBE_BUY / AVATAR_EQUIP', () => {
     expect(s.trophies.fashionista).toBeDefined()
   })
 
-  it('repairAvatar drops unknown ids and refills required slots', () => {
-    const broken = { owned: ['ghost-item', 'skin-light'], equipped: { skin: 'ghost', hair: null, dress: 'skin-light', head: 'ghost' } }
+  it('repairAvatar drops unknown ids, refills required slots, migrates the old single-outfit shape', () => {
+    const broken = { owned: ['ghost-item', 'skin-light', 'shoes-basic'], equipped: { skin: 'ghost', hair: null, dress: 'skin-light', head: 'ghost', shoes: 'shoes-basic' } }
     const fixed = repairAvatar(broken)
     expect(fixed.owned).not.toContain('ghost-item')
-    for (const slot of REQUIRED_SLOTS) expect(fixed.equipped[slot], slot).toBeTruthy()
-    expect(fixed.equipped.head).toBeNull()
-    // an owned item in the wrong slot is a bug in saved data; required slot still ends up valid
-    expect(wardrobe.find((i) => i.id === fixed.equipped.dress).slot).toBe('dress')
+    expect(fixed.equipped).toBeUndefined()
+    for (const id of THEME_IDS) {
+      const eq = fixed.equippedByTheme[id]
+      for (const slot of REQUIRED_SLOTS) expect(eq[slot], `${id} ${slot}`).toBeTruthy()
+      expect(eq.head).toBeNull()
+      // an owned item in the wrong slot is a bug in saved data; required slot still ends up valid
+      expect(wardrobe.find((i) => i.id === eq.dress).slot).toBe('dress')
+      expect(eq.shoes).toBe('shoes-basic') // legacy outfit carried into every world
+    }
   })
 })
 

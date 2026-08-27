@@ -23,6 +23,8 @@
   { "id": "hair-daisy-bun", "slot": "hair", "name": "קוקו גינה", "theme": "flowers", "price": 300, "rarity": "RARE", "variant": "bun", "colors": { "hair": "#b45309" } },
 
   { "id": "dress-basic", "slot": "dress", "name": "שמלה פשוטה", "theme": "all", "price": 0, "rarity": "FREE", "variant": "plain", "colors": { "main": "#f472b6" } },
+  { "id": "dress-starter-unicorn", "slot": "dress", "name": "שמלת לילך", "theme": "unicorn", "price": 0, "rarity": "FREE", "variant": "plain", "colors": { "main": "#c4b5fd" } },
+  { "id": "dress-starter-flowers", "slot": "dress", "name": "שמלת גינה", "theme": "flowers", "price": 0, "rarity": "FREE", "variant": "sundress", "colors": { "main": "#86efac", "accent": "#fef3c7", "trim": "#f472b6" } },
   { "id": "dress-plain-blue", "slot": "dress", "name": "שמלה כחולה", "theme": "all", "price": 150, "rarity": "RARE", "variant": "plain", "colors": { "main": "#60a5fa" } },
   { "id": "dress-plain-yellow", "slot": "dress", "name": "שמלה צהובה", "theme": "all", "price": 150, "rarity": "RARE", "variant": "plain", "colors": { "main": "#fde047" } },
   { "id": "dress-overalls", "slot": "dress", "name": "אוברול ג'ינס", "theme": "all", "price": 250, "rarity": "RARE", "variant": "overalls", "colors": { "main": "#3b82f6", "accent": "#fef08a" } },

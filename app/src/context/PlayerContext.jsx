@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useReducer } from 'react'
 import config from '../data/config.json'
 import wardrobe from '../data/wardrobe.json'
+import { THEME_IDS, DEFAULT_THEME } from '../data/themes.js'
 import { evaluateTrophies } from '../data/trophies.js'
 
 const STORAGE_KEY = 'melanies-quests-v1'
@@ -10,15 +11,30 @@ const STORAGE_KEY = 'melanies-quests-v1'
 export const AVATAR_SLOTS = ['skin', 'hair', 'dress', 'shoes', 'head', 'hand', 'back', 'pet']
 export const REQUIRED_SLOTS = ['skin', 'hair', 'dress', 'shoes']
 
-// exported for tests: free items are owned from day one and dress the default doll
-export function defaultAvatar(items = wardrobe) {
+// Each world dresses its own doll: free items tagged for that world win over
+// generic free items, so the three starter dolls already look different.
+export function defaultEquipped(themeId, items = wardrobe) {
   const free = items.filter((i) => i.price === 0)
   const equipped = {}
   for (const slot of AVATAR_SLOTS) {
-    equipped[slot] = free.find((i) => i.slot === slot)?.id ?? null
+    equipped[slot] =
+      free.find((i) => i.slot === slot && i.theme === themeId)?.id ??
+      free.find((i) => i.slot === slot && i.theme === 'all')?.id ??
+      free.find((i) => i.slot === slot)?.id ??
+      null
   }
-  return { owned: free.map((i) => i.id), equipped }
+  return equipped
 }
+
+// exported for tests: wardrobe items are shared (bought once), outfits are per world
+export function defaultAvatar(items = wardrobe) {
+  const equippedByTheme = {}
+  for (const id of THEME_IDS) equippedByTheme[id] = defaultEquipped(id, items)
+  return { owned: items.filter((i) => i.price === 0).map((i) => i.id), equippedByTheme }
+}
+
+export const getEquipped = (state, themeId) =>
+  state.avatar.equippedByTheme[themeId] ?? state.avatar.equippedByTheme[DEFAULT_THEME]
 
 // exported for tests
 export const DEFAULT_STATE = {
@@ -35,8 +51,8 @@ export const DEFAULT_STATE = {
   chestClaimed: null, // business date the daily chest was opened
   trophies: {}, // trophyId -> earned timestamp
   ownedGames: ['catch'], // arcade games bought with coins (catch is free)
-  arcadeHighScores: {}, // gameId -> best score
-  avatar: defaultAvatar(), // { owned: [itemId], equipped: { slot: itemId|null } }
+  arcadeHighScores: {}, // gameId -> best score (arcade + world games)
+  avatar: defaultAvatar(), // { owned: [itemId], equippedByTheme: { themeId: { slot: itemId|null } } }
   corrupt: false,
 }
 
@@ -62,6 +78,17 @@ export function applyXp(state, gained) {
     level += 1
   }
   return { xp, level, leveledUp: level > state.level }
+}
+
+function withEquip(avatar, themeId, slot, itemId) {
+  const id = THEME_IDS.includes(themeId) ? themeId : DEFAULT_THEME
+  return {
+    ...avatar,
+    equippedByTheme: {
+      ...avatar.equippedByTheme,
+      [id]: { ...avatar.equippedByTheme[id], [slot]: itemId },
+    },
+  }
 }
 
 // exported for tests
@@ -134,27 +161,25 @@ export function reducer(state, action) {
       return { ...next, trophies: evaluateTrophies(next) }
     }
     case 'WARDROBE_BUY': {
-      const { item } = action // { id, slot, name, price }
+      const { item, themeId = DEFAULT_THEME } = action // item = { id, slot, name, price }
       if (state.avatar.owned.includes(item.id) || state.coins < item.price) return state
       const purchase = { id: Date.now() + '-' + item.id, ts: Date.now(), title: `👗 ${item.name}`, cost: item.price, kind: 'wardrobe' }
       const next = {
         ...state,
         coins: state.coins - item.price,
         purchases: [purchase, ...state.purchases],
-        avatar: {
-          owned: [...state.avatar.owned, item.id],
-          equipped: { ...state.avatar.equipped, [item.slot]: item.id }, // wear it right away
-        },
+        // wear it right away in the world she bought it in
+        avatar: withEquip({ ...state.avatar, owned: [...state.avatar.owned, item.id] }, themeId, item.slot, item.id),
       }
       return { ...next, trophies: evaluateTrophies(next) }
     }
     case 'AVATAR_EQUIP': {
-      const { slot, itemId } = action // itemId null = take it off (optional slots only)
+      const { themeId = DEFAULT_THEME, slot, itemId } = action // itemId null = take it off (optional slots only)
       if (!AVATAR_SLOTS.includes(slot)) return state
       if (itemId === null && REQUIRED_SLOTS.includes(slot)) return state
       if (itemId !== null && !state.avatar.owned.includes(itemId)) return state
-      if (state.avatar.equipped[slot] === itemId) return state
-      return { ...state, avatar: { ...state.avatar, equipped: { ...state.avatar.equipped, [slot]: itemId } } }
+      if (getEquipped(state, themeId)[slot] === itemId) return state
+      return { ...state, avatar: withEquip(state.avatar, themeId, slot, itemId) }
     }
     case 'ARCADE_SCORE': {
       const prev = state.arcadeHighScores[action.game] || 0
@@ -183,19 +208,27 @@ export function reducer(state, action) {
   }
 }
 
-// Items can be renamed/removed in wardrobe.json between releases; make sure
-// every equipped id still exists and required slots are never empty.
+// Items can be renamed/removed in wardrobe.json between releases, and saves
+// from before per-world outfits hold a single `equipped` map. Make every world
+// valid: equipped ids exist, sit in the right slot, are owned; required slots
+// are never empty.
 export function repairAvatar(avatar, items = wardrobe) {
   const byId = new Map(items.map((i) => [i.id, i]))
   const fresh = defaultAvatar(items)
   const owned = [...new Set([...fresh.owned, ...(avatar?.owned ?? []).filter((id) => byId.has(id))])]
-  const equipped = {}
-  for (const slot of AVATAR_SLOTS) {
-    const cur = avatar?.equipped?.[slot]
-    const valid = cur && byId.get(cur)?.slot === slot && owned.includes(cur)
-    equipped[slot] = valid ? cur : REQUIRED_SLOTS.includes(slot) ? fresh.equipped[slot] : null
+  const legacy = avatar?.equipped // pre-per-world shape
+  const equippedByTheme = {}
+  for (const themeId of THEME_IDS) {
+    const src = avatar?.equippedByTheme?.[themeId] ?? legacy
+    const out = {}
+    for (const slot of AVATAR_SLOTS) {
+      const cur = src?.[slot]
+      const valid = cur && byId.get(cur)?.slot === slot && owned.includes(cur)
+      out[slot] = valid ? cur : REQUIRED_SLOTS.includes(slot) ? fresh.equippedByTheme[themeId][slot] : null
+    }
+    equippedByTheme[themeId] = out
   }
-  return { owned, equipped }
+  return { owned, equippedByTheme }
 }
 
 function loadInitial() {

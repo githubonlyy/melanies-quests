@@ -3,6 +3,7 @@ import { THEMES, THEME_IDS } from '../data/themes.js'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { speak } from '../match/speak.js'
 import { sfx } from '../match/sounds.js'
+import Avatar from '../avatar/Avatar.jsx'
 
 const PROMPT = 'איזה עולם נבחר היום?'
 
@@ -58,10 +59,12 @@ export default function ThemePicker() {
                   ⭐ הבחירה האחרונה
                 </span>
               )}
-              <div className="bg-white/90 rounded-[1.6rem] flex flex-col items-center gap-2 md:gap-3 py-6 md:py-10 px-4">
-                <span className="text-7xl md:text-8xl drop-shadow-md group-hover:scale-110 transition-transform anim-float-bob">
-                  {t.emoji}
-                </span>
+              <div className="bg-white/90 rounded-[1.6rem] flex flex-col items-center gap-2 md:gap-3 py-5 md:py-8 px-4">
+                {/* each world has its own doll — show her so the pick is about "who am I today" */}
+                <div className="relative h-40 md:h-48 flex items-end justify-center group-hover:scale-105 transition-transform">
+                  <Avatar size={190} themeId={id} className="anim-float-bob max-h-full" />
+                  <span className="absolute -top-1 -end-6 text-4xl md:text-5xl drop-shadow-md">{t.emoji}</span>
+                </div>
                 <span className="text-3xl md:text-4xl font-black text-slate-800">{t.label}</span>
                 <span className="text-sm md:text-base font-bold text-slate-500">{t.subtitle}</span>
                 <span className="flex gap-1 text-xl mt-1">

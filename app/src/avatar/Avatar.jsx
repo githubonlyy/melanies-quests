@@ -5,11 +5,14 @@
 //   size      rendered height in px (width follows the 200x320 aspect)
 //   className extra classes on the <svg>
 //   equipped  optional { slot: itemId } map overriding player state
+//   themeId   optional world whose outfit to show (defaults to the active world)
 //
 // Layer order (bottom -> top): back item -> hair back -> legs/arms/torso ->
 // shoes -> dress -> head + face -> bangs -> head accessory -> hand item -> pet.
 import { useId } from 'react'
-import { usePlayer } from '../context/PlayerContext.jsx'
+import { usePlayer, getEquipped } from '../context/PlayerContext.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
+import { DEFAULT_THEME } from '../data/themes.js'
 import { resolveEquipped } from './registry.js'
 import { Body, Head } from './parts/body.jsx'
 import { HAIR } from './parts/hair.jsx'
@@ -28,11 +31,13 @@ function Part({ table, item, uid }) {
   return Render ? <Render item={item} uid={uid} /> : null
 }
 
-export default function Avatar({ size = 64, className = '', equipped }) {
+export default function Avatar({ size = 64, className = '', equipped, themeId }) {
   const { state } = usePlayer()
+  const { themeId: activeTheme } = useTheme()
   // gradient ids must be unique per doll (many dolls on one Closet page)
   const uid = 'av' + useId().replace(/[^a-zA-Z0-9]/g, '')
-  const items = resolveEquipped(equipped ?? state.avatar.equipped)
+  // each world has its own outfit; `themeId` lets the picker show all three dolls
+  const items = resolveEquipped(equipped ?? getEquipped(state, themeId ?? activeTheme ?? DEFAULT_THEME))
 
   const skin = items.skin?.colors?.skin ?? DEFAULT_SKIN
   const eyes = items.skin?.colors?.eyes ?? '#4f7fe0'
