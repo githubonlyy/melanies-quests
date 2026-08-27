@@ -229,7 +229,8 @@ export default function App() {
           </header>
 
           <div className="flex-1 overflow-y-auto p-3 md:p-8 relative">
-            <div className="relative z-10 max-w-5xl mx-auto pb-8 md:pb-20">
+            {/* no z-index here: it would cap the fixed game overlays below the z-20 sidebar */}
+            <div className="relative max-w-5xl mx-auto pb-8 md:pb-20">
               {activeTab === 'events' && (
                 <EventBoard
                   onStartMatch={(event, mode) => setMatch({ event, mode, practice: playedToday(event.id) })}
