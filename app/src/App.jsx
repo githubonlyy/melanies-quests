@@ -14,6 +14,7 @@ import CoachStats from './screens/CoachStats.jsx'
 import MatchEngine from './match/MatchEngine.jsx'
 import Avatar from './avatar/Avatar.jsx'
 import wardrobe from './data/wardrobe.json'
+import { EVENTS } from './data/events.js'
 
 const ToastContext = createContext(() => {})
 export const useToast = () => useContext(ToastContext)
@@ -26,13 +27,29 @@ const TABS = [
   { id: 'trophies', label: 'גביעים', Icon: Trophy, color: 'bg-yellow-500', active: 'text-yellow-300' },
 ]
 
+// Dev deep-links (used with ?theme=): ?tab=closet|rewards|arcade|trophies|admin
+// opens a tab directly, ?match=<eventId> jumps straight into a practice match.
+function urlParam(name, valid) {
+  try {
+    const v = new URLSearchParams(window.location.search).get(name)
+    return v && valid(v) ? v : null
+  } catch {
+    return null
+  }
+}
+
 export default function App() {
   const { state, dispatch, playedToday } = usePlayer()
   const { theme, clearTheme } = useTheme()
-  const [activeTab, setActiveTab] = useState('events')
+  const [activeTab, setActiveTab] = useState(
+    () => urlParam('tab', (v) => [...TABS.map((t) => t.id), 'admin'].includes(v)) ?? 'events',
+  )
   const [toast, setToast] = useState(null)
   // { event, mode, practice } while a match is running
-  const [match, setMatch] = useState(null)
+  const [match, setMatch] = useState(() => {
+    const id = urlParam('match', (v) => EVENTS.some((e) => e.id === v))
+    return id ? { event: EVENTS.find((e) => e.id === id), mode: 'classic', practice: true } : null
+  })
   const [musicOn, setMusicOnState] = useState(isMusicOn())
   const [speechOn, setSpeechOnState] = useState(isSpeechOn())
 
