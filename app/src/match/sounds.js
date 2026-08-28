@@ -13,14 +13,23 @@ export function setMuted(v) {
   try { localStorage.setItem(MUTE_KEY, v ? '1' : '0') } catch { /* ignore */ }
 }
 
+const isHidden = () => typeof document !== 'undefined' && document.hidden
+
 function ac() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext
     if (!AC) return null
     ctx = new AC()
   }
-  if (ctx.state === 'suspended') ctx.resume()
+  // a hidden tab stays silent — never wake the audio device in the background
+  if (ctx.state === 'suspended' && !isHidden()) ctx.resume()
   return ctx
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) ctx?.suspend?.()
+  })
 }
 
 // one enveloped oscillator note

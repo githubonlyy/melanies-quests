@@ -119,6 +119,8 @@ export const DANCE_SONGS = DANCE_SONG_IDS.map((id) => {
 })
 export const getTrack = (name) => TRACKS[name] ?? null
 
+const isHidden = () => typeof document !== 'undefined' && document.hidden
+
 function ac() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext
@@ -128,8 +130,27 @@ function ac() {
     master.gain.value = 0.5
     master.connect(ctx.destination)
   }
-  if (ctx.state === 'suspended') ctx.resume()
+  // never wake the audio device while the app is in the background
+  if (ctx.state === 'suspended' && !isHidden()) ctx.resume()
   return ctx
+}
+
+// Background rule: a hidden tab (tablet locked, app switched, browser minimized)
+// must go silent. The scheduler stops queueing notes and the AudioContext is
+// suspended — its clock freezes, so the track picks up where it left off.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (current) {
+        clearInterval(current.timer)
+        current.timer = null
+      }
+      ctx?.suspend?.()
+    } else if (current) {
+      ctx?.resume?.()
+      if (!current.timer) current.timer = setInterval(current.tick, 120)
+    }
+  })
 }
 
 function note(freq, t, dur, type, vol) {
@@ -206,7 +227,7 @@ export function setMusicOn(v) {
 
 export function stopMusic() {
   if (!current) return
-  clearInterval(current.timer)
+  if (current.timer) clearInterval(current.timer)
   current = null
 }
 
@@ -226,11 +247,12 @@ export function playMusic(name, { restart = false } = {}) {
   const parts = track.sections ?? [track]
   const stepDur = 60 / track.bpm / 4 // sixteenth note
   const startTime = c.currentTime + 0.05
-  const state = { name, bpm: track.bpm, step: 0, part: 0, nextTime: startTime, startTime, timer: null }
+  const state = { name, bpm: track.bpm, step: 0, part: 0, nextTime: startTime, startTime, timer: null, tick: null }
 
-  // lookahead scheduler: keep ~0.35s of audio queued
-  state.timer = setInterval(() => {
-    if (!ctx) return
+  // lookahead scheduler: keep ~0.35s of audio queued. Named so the
+  // visibilitychange handler above can stop and restart it.
+  state.tick = () => {
+    if (!ctx || document.hidden) return
     while (state.nextTime < ctx.currentTime + 0.35) {
       const part = parts[state.part]
       scheduleStep(part, state.step, state.nextTime, stepDur)
@@ -241,7 +263,8 @@ export function playMusic(name, { restart = false } = {}) {
         state.part = (state.part + 1) % parts.length
       }
     }
-  }, 120)
+  }
+  state.timer = setInterval(state.tick, 120)
   current = state
 }
 

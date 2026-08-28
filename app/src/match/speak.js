@@ -29,6 +29,10 @@ function pickVoice() {
 if (synth()) {
   pickVoice()
   synth().addEventListener?.('voiceschanged', pickVoice)
+  // nothing should keep talking once the tablet is locked or the tab is hidden
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) synth().cancel()
+  })
 }
 
 export const isSpeechOn = () => enabled
