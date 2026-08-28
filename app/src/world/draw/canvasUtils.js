@@ -246,7 +246,7 @@ export function canvasToDataUrlUnder(canvas, maxBytes) {
  * Flatten background + drawing + template outline into one downscaled JPEG.
  * `templateSvg` may be null for a blank page.
  */
-export async function composeDrawing({ canvas, bg, templateSvg, w, h, maxSide = 640, maxBytes = 150 * 1024 }) {
+export async function composeDrawing({ canvas, bg, templateSvg, templateImg, w, h, maxSide = 640, maxBytes = 150 * 1024 }) {
   const out = fitWithin(w, h, maxSide)
   const off = document.createElement('canvas')
   off.width = out.w
@@ -259,6 +259,12 @@ export async function composeDrawing({ canvas, bg, templateSvg, w, h, maxSide = 
     const sq = squareRect(out.w, out.h)
     const img = await svgToImage(templateSvg, Math.round(sq.s), Math.round(sq.s))
     ctx.drawImage(img, sq.x, sq.y, sq.s, sq.s)
+  } else if (templateImg) {
+    // family pages keep their own aspect ratio; letterbox them like the screen does
+    const r = containRect(templateImg.naturalWidth || templateImg.width, templateImg.naturalHeight || templateImg.height, { x: 0, y: 0, w: out.w, h: out.h })
+    ctx.globalAlpha = templateImg.__alpha ?? 1
+    ctx.drawImage(templateImg, r.x, r.y, r.w, r.h)
+    ctx.globalAlpha = 1
   }
   return { dataUrl: canvasToDataUrlUnder(off, maxBytes), w: out.w, h: out.h }
 }

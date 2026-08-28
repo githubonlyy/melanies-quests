@@ -9,12 +9,24 @@
 // draw/canvasUtils.js). Live strokes paint straight onto the canvas; undo,
 // clear, reopen and resize replay the ops from scratch.
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { X, Undo2, Trash2, Save, Images, Brush, Eraser, PaintBucket, Rainbow, Check, BookOpen } from 'lucide-react'
+import { X, Undo2, Trash2, Save, Images, Brush, Eraser, PaintBucket, Rainbow, Check, BookOpen, Pencil, Ghost } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { speak } from '../match/speak.js'
 import { sfx } from '../match/sounds.js'
 import Avatar from '../avatar/Avatar.jsx'
 import { TEMPLATES, TEMPLATE_VIEW, TEMPLATE_STROKE, templateById } from './draw/templates.js'
+import {
+  FAMILY_PAGES,
+  hasFamilyPages,
+  familyPageById,
+  loadPageOverlay,
+  loadPageThumb,
+  loadPageModes,
+  savePageMode,
+  PAGE_MODES,
+  DEFAULT_PAGE_MODE,
+  MODE_OPACITY,
+} from './draw/familyPages.js'
 import { buildPalette, BRUSH_SIZES, DEFAULT_COLOR, DEFAULT_SIZE, ERASER_SCALE, stickerList } from './draw/palette.js'
 import { loadGallery, persistNewDrawing, removeDrawing, saveGallery, newDrawingId } from './draw/gallery.js'
 import {
@@ -66,10 +78,15 @@ export default function Draw({ onClose }) {
   const [saving, setSaving] = useState(false)
   // render-side mirror of the ops list (count for button states, bg for the layer)
   const [opInfo, setOpInfo] = useState({ count: 0, bg: '#ffffff' })
+  // family pages: the cleaned-up overlay, plus her per-page קווים/שקוף choice
+  const [overlay, setOverlay] = useState(null) // { url } once processed
+  const [overlayBusy, setOverlayBusy] = useState(false)
+  const [pageModes, setPageModes] = useState(() => loadPageModes())
 
   const wrapRef = useRef(null)
   const canvasRef = useRef(null)
   const templateSvgRef = useRef(null)
+  const templateImgRef = useRef(null)
   const dollBtnRef = useRef(null)
   const dollImgRef = useRef(null)
   const opsRef = useRef([])
@@ -77,7 +94,12 @@ export default function Draw({ onClose }) {
   const strokeRef = useRef(null) // { op, pointerId, len } while a finger is down
 
   const size = BRUSH_SIZES.find((s) => s.id === sizeId) ?? BRUSH_SIZES[1]
-  const template = templateById(templateId)
+  // a page is either the built-in path art or a family picture
+  const template = familyPageById(templateId) ?? templateById(templateId)
+  const isImagePage = template.kind === 'image'
+  const pageMode = pageModes[template.id] ?? DEFAULT_PAGE_MODE
+  const overlayAlpha = MODE_OPACITY[pageMode] ?? 1
+  const isBlank = !isImagePage && (template.paths?.length ?? 0) === 0
   const bg = opInfo.bg
   const hasOps = opInfo.count > 0
 
@@ -125,6 +147,29 @@ export default function Draw({ onClose }) {
   useEffect(() => {
     speak('בואי נצייר!', { delay: 600 })
   }, [])
+
+  // Turn the picked family picture into a transparent-paper overlay. Cached per
+  // session inside familyPages, so flipping back to a page is instant.
+  useEffect(() => {
+    if (!isImagePage) {
+      setOverlay(null)
+      setOverlayBusy(false)
+      return
+    }
+    let alive = true
+    setOverlayBusy(true)
+    loadPageOverlay(template)
+      .then((res) => alive && setOverlay(res))
+      .catch(() => {
+        // processing failed — fall back to the untouched picture, faint, so she
+        // can still trace it rather than facing a blank page
+        if (alive) setOverlay({ url: template.url, processed: false, failed: true })
+      })
+      .finally(() => alive && setOverlayBusy(false))
+    return () => {
+      alive = false
+    }
+  }, [isImagePage, template])
 
   // the doll image is cached per outfit; a new world means a new outfit
   useEffect(() => {
@@ -332,6 +377,13 @@ export default function Draw({ onClose }) {
     sfx.click()
   }
 
+  const togglePageMode = () => {
+    const next = pageMode === PAGE_MODES.lines ? PAGE_MODES.trace : PAGE_MODES.lines
+    setPageModes((m) => savePageMode(m, template.id, next))
+    sfx.click()
+    speak(next === PAGE_MODES.lines ? 'קווים' : 'שקוף')
+  }
+
   const pickTemplate = (t) => {
     setTemplateId(t.id)
     setSheet(null)
@@ -343,7 +395,7 @@ export default function Draw({ onClose }) {
 
   const save = async () => {
     if (saving) return
-    if (!hasOps && template.paths.length === 0) {
+    if (!hasOps && isBlank) {
       sfx.buzz()
       notify('הדף ריק — ציירי משהו קודם!')
       return
@@ -354,7 +406,8 @@ export default function Draw({ onClose }) {
       const { dataUrl, w, h } = await composeDrawing({
         canvas: canvasRef.current,
         bg,
-        templateSvg: template.paths.length ? templateSvgRef.current : null,
+        templateSvg: !isImagePage && template.paths.length ? templateSvgRef.current : null,
+        templateImg: isImagePage ? templateImgRef.current : null,
         w: view.w,
         h: view.h,
       })
@@ -436,6 +489,15 @@ export default function Draw({ onClose }) {
         <h1 className="flex-1 min-w-0 text-white font-black text-2xl md:text-3xl drop-shadow-md truncate">
           <span className="hidden sm:inline">🎨 ציור</span>
         </h1>
+        {isImagePage && (
+          <IconBtn
+            onClick={togglePageMode}
+            label={pageMode === PAGE_MODES.lines ? 'קווים' : 'שקוף'}
+            tone={pageMode === PAGE_MODES.trace ? 'accent' : undefined}
+          >
+            {pageMode === PAGE_MODES.lines ? <Pencil size={28} strokeWidth={2.5} /> : <Ghost size={28} strokeWidth={2.5} />}
+          </IconBtn>
+        )}
         <IconBtn onClick={undo} label="ביטול" disabled={!hasOps}>
           <Undo2 size={30} strokeWidth={3} />
         </IconBtn>
@@ -465,7 +527,26 @@ export default function Draw({ onClose }) {
             onLostPointerCapture={endStroke}
             aria-label="לוח ציור"
           />
-          <TemplateSvg ref={templateSvgRef} template={template} className="absolute inset-0 w-full h-full pointer-events-none" />
+          {isImagePage ? (
+            overlay && (
+              <img
+                ref={templateImgRef}
+                src={overlay.url}
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+                className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                style={{ opacity: overlay.failed ? MODE_OPACITY.trace : overlayAlpha }}
+              />
+            )
+          ) : (
+            <TemplateSvg ref={templateSvgRef} template={template} className="absolute inset-0 w-full h-full pointer-events-none" />
+          )}
+          {overlayBusy && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className="bg-white/90 rounded-2xl px-5 py-3 font-black text-slate-700 text-xl anim-pop">מכינים את הדף…</span>
+            </div>
+          )}
         </div>
 
         <div
@@ -573,26 +654,25 @@ export default function Draw({ onClose }) {
         <Sheet title="דפי צביעה" emoji="🖍️" onClose={() => setSheet(null)}>
           <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
             {TEMPLATES.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => pickTemplate(t)}
-                aria-label={t.name}
-                className={`rounded-2xl border-b-8 p-2 flex flex-col items-center gap-1 transition-all active:translate-y-1 active:border-b-2
-                  ${templateId === t.id ? 'bg-(--t-accent) border-(--t-accent-deep)' : 'bg-slate-100 border-slate-300'}`}
-              >
-                <div className="w-full aspect-square bg-white rounded-xl border-2 border-slate-200 flex items-center justify-center">
-                  {t.paths.length ? (
-                    <TemplateSvg template={t} className="w-full h-full" />
-                  ) : (
-                    <span className="text-5xl">{t.emoji}</span>
-                  )}
-                </div>
-                <span className="text-lg font-black text-slate-800">
-                  {t.emoji} {t.name}
-                </span>
-              </button>
+              <PageTile key={t.id} active={templateId === t.id} onClick={() => pickTemplate(t)} label={`${t.emoji} ${t.name}`} name={t.name}>
+                {t.paths.length ? <TemplateSvg template={t} className="w-full h-full" /> : <span className="text-5xl">{t.emoji}</span>}
+              </PageTile>
             ))}
           </div>
+
+          {/* pictures Lior commits to src/world/draw/family/ — see that README */}
+          {hasFamilyPages && (
+            <>
+              <h3 className="mt-5 mb-2 text-2xl font-black text-slate-700">המשפחה שלי 💕</h3>
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+                {FAMILY_PAGES.map((t) => (
+                  <PageTile key={t.id} active={templateId === t.id} onClick={() => pickTemplate(t)} label={t.name} name={t.name}>
+                    <FamilyThumb page={t} />
+                  </PageTile>
+                ))}
+              </div>
+            </>
+          )}
         </Sheet>
       )}
 
@@ -664,6 +744,38 @@ function ToolBtn({ ref, active, onClick, label, children }) {
     >
       {children}
       <span className="text-[11px] font-black leading-none">{label}</span>
+    </button>
+  )
+}
+
+/** Picker tile art: the cleaned-up page, so the thumbnail matches what she gets. */
+function FamilyThumb({ page }) {
+  const [url, setUrl] = useState(page.vector ? page.url : null)
+  useEffect(() => {
+    let alive = true
+    loadPageThumb(page)
+      .then((r) => alive && r && setUrl(r.url))
+      .catch(() => alive && setUrl(page.url)) // fall back to the raw picture
+    return () => {
+      alive = false
+    }
+  }, [page])
+  if (!url) return <span className="text-3xl opacity-40">🖼️</span>
+  return <img src={url} alt="" aria-hidden="true" className="w-full h-full object-contain" />
+}
+
+function PageTile({ active, onClick, label, name, children }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={name}
+      className={`rounded-2xl border-b-8 p-2 flex flex-col items-center gap-1 transition-all active:translate-y-1 active:border-b-2
+        ${active ? 'bg-(--t-accent) border-(--t-accent-deep)' : 'bg-slate-100 border-slate-300'}`}
+    >
+      <div className="w-full aspect-square bg-white rounded-xl border-2 border-slate-200 flex items-center justify-center overflow-hidden">
+        {children}
+      </div>
+      <span className="text-lg font-black text-slate-800 leading-tight text-center line-clamp-1">{label}</span>
     </button>
   )
 }
