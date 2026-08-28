@@ -24,20 +24,22 @@ export default function EventBoard({ onStartMatch }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center bg-(--t-panel) p-4 rounded-2xl border-4 border-(--t-panel-border) backdrop-blur-sm">
-        <h2 className="text-2xl md:text-3xl font-black text-white tracking-wide drop-shadow-md">המשימות של היום</h2>
-        <div className="px-3 py-1.5 bg-green-500 text-white rounded-xl border-b-4 border-green-700 font-bold text-sm flex items-center gap-1">
-          <Check size={16} strokeWidth={3} /> משימות חדשות
+    <div className="space-y-3 sm:space-y-5 lg:space-y-6">
+      <div className="flex justify-between items-center gap-2 bg-(--t-panel) p-3 lg:p-4 rounded-2xl border-4 border-(--t-panel-border) backdrop-blur-sm">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-wide drop-shadow-md whitespace-nowrap">המשימות של היום</h2>
+        {/* phone: badge drops to "חדשות" only, so the title never wraps at 360px */}
+        <div className="shrink-0 px-2 py-1 sm:px-3 sm:py-1.5 bg-green-500 text-white rounded-xl border-b-4 border-green-700 font-bold text-xs sm:text-sm flex items-center gap-1">
+          <Check size={14} strokeWidth={3} className="shrink-0" />
+          <span className="whitespace-nowrap"><span className="hidden sm:inline">משימות </span>חדשות</span>
         </div>
       </div>
 
       {/* DAILY CHEST STRIP */}
-      <div className="flex items-center gap-3 bg-(--t-panel) p-3 md:p-4 rounded-2xl border-4 border-(--t-panel-border) backdrop-blur-sm">
+      <div className="flex items-center gap-2.5 sm:gap-3 bg-(--t-panel) p-2.5 sm:p-3 lg:p-4 rounded-2xl border-4 border-(--t-panel-border) backdrop-blur-sm">
         <button
           onClick={() => chestReady && !chestClaimed && setChestOpen(true)}
           disabled={!chestReady || chestClaimed}
-          className={`shrink-0 w-16 h-16 md:w-18 md:h-18 rounded-2xl border-b-4 flex items-center justify-center transition-all
+          className={`shrink-0 w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18 rounded-2xl border-b-4 flex items-center justify-center transition-all
             ${chestClaimed
               ? 'bg-green-500 border-green-700'
               : chestReady
@@ -46,11 +48,11 @@ export default function EventBoard({ onStartMatch }) {
           aria-label="תיבת האוצר היומית"
         >
           {chestClaimed
-            ? <Check size={32} strokeWidth={3.5} className="text-white" />
-            : <Gift size={32} className={chestReady ? 'text-yellow-900' : 'text-(--t-text-soft)'} />}
+            ? <Check size={30} strokeWidth={3.5} className="text-white" />
+            : <Gift size={30} className={chestReady ? 'text-yellow-900' : 'text-(--t-text-soft)'} />}
         </button>
         <div className="flex-1" dir="rtl">
-          <p className="text-white font-black leading-tight">
+          <p className="text-white font-black leading-tight text-sm sm:text-base">
             {chestClaimed
               ? 'תיבת האוצר נאספה! נתראה מחר'
               : chestReady
@@ -70,7 +72,7 @@ export default function EventBoard({ onStartMatch }) {
 
       {chestOpen && <ChestModal onClose={() => setChestOpen(false)} />}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-8">
         {EVENTS.map((event) => {
           const practice = playedToday(event.id)
           return (
@@ -80,37 +82,32 @@ export default function EventBoard({ onStartMatch }) {
               className={`group relative ${event.color} rounded-3xl border-b-8 ${event.borderColor} cursor-pointer hover:-translate-y-2 active:translate-y-2 active:border-b-0 transition-all duration-200 shadow-xl`}
             >
               <div className="bg-white m-1.5 rounded-[1.25rem] h-[calc(100%-12px)] flex flex-col overflow-hidden relative">
-                <div className={`${event.headerColor} p-2 text-center border-b-4 border-black/10`}>
+                {/* subject strip: the emoji + card colour already carry it on phones */}
+                <div className={`${event.headerColor} hidden sm:block p-2 text-center border-b-4 border-black/10`}>
                   <span className="text-white font-black text-sm tracking-wider drop-shadow-sm">
                     {event.type}
                   </span>
                 </div>
 
-                <div className="p-4 md:p-6 pb-12 md:pb-14 flex items-start gap-3 md:gap-4 flex-1">
-                  <div className={`w-18 h-18 md:w-22 md:h-22 shrink-0 rounded-2xl bg-slate-100 border-4 ${event.borderColor} shadow-inner rotate-3 group-hover:rotate-0 transition-transform flex items-center justify-center text-5xl md:text-6xl leading-none`}>
+                <div className="p-3 sm:p-4 lg:p-6 sm:pb-12 lg:pb-14 flex items-center sm:items-start gap-3 lg:gap-4 flex-1">
+                  <div className={`w-16 h-16 sm:w-18 sm:h-18 lg:w-22 lg:h-22 shrink-0 rounded-2xl bg-slate-100 border-4 ${event.borderColor} shadow-inner rotate-3 group-hover:rotate-0 transition-transform flex items-center justify-center text-4xl sm:text-5xl lg:text-6xl leading-none`}>
                     {event.emoji}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2">
-                      {event.title}
-                    </h3>
-                    <div className="bg-slate-100 p-2 rounded-xl border-2 border-slate-200">
-                      <p className="font-bold text-slate-600 text-sm md:text-base">{event.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-800 leading-tight">
+                        {event.title}
+                      </h3>
+                      {/* phone: the reward pill rides the title line instead of a footer row */}
+                      <RewardBadge practice={practice} maxCoins={maxCoins} className="sm:hidden shrink-0 ms-auto" />
+                    </div>
+                    <div className="bg-slate-100 p-1.5 sm:p-2 rounded-xl border-2 border-slate-200">
+                      <p className="font-bold text-slate-600 text-sm lg:text-base leading-snug">{event.description}</p>
                     </div>
                   </div>
                 </div>
 
-                {practice ? (
-                  <div className="absolute bottom-4 left-4 bg-blue-100 px-3 py-1 rounded-full border-2 border-blue-300 flex items-center gap-1 shadow-md">
-                    <Sparkles className="text-blue-600" size={14} />
-                    <span className="font-black text-blue-600 text-sm">אימון · XP</span>
-                  </div>
-                ) : (
-                  <div className="absolute bottom-4 left-4 bg-yellow-400 px-3 py-1 rounded-full border-2 border-yellow-600 flex items-center gap-1 shadow-md">
-                    <Coins className="text-yellow-900 fill-current" size={14} />
-                    <span className="font-black text-yellow-900 text-sm">עד {maxCoins}+</span>
-                  </div>
-                )}
+                <RewardBadge practice={practice} maxCoins={maxCoins} className="hidden sm:flex absolute bottom-4 end-4" />
               </div>
             </div>
           )
@@ -125,6 +122,24 @@ export default function EventBoard({ onStartMatch }) {
           onStart={(mode) => { setPreview(null); onStartMatch(preview, mode) }}
         />
       )}
+    </div>
+  )
+}
+
+/* ---------- REWARD PILL ---------- */
+
+// "up to N coins" / "practice" pill. Rides the title line on phones and sits in
+// the card's bottom corner from sm: up, so the markup only exists once.
+function RewardBadge({ practice, maxCoins, className = '' }) {
+  return practice ? (
+    <div className={`bg-blue-100 px-2.5 py-1 rounded-full border-2 border-blue-300 flex items-center gap-1 shadow-md ${className}`}>
+      <Sparkles className="text-blue-600 shrink-0" size={14} />
+      <span className="font-black text-blue-600 text-xs sm:text-sm whitespace-nowrap">אימון · XP</span>
+    </div>
+  ) : (
+    <div className={`bg-yellow-400 px-2.5 py-1 rounded-full border-2 border-yellow-600 flex items-center gap-1 shadow-md ${className}`}>
+      <Coins className="text-yellow-900 fill-current shrink-0" size={14} />
+      <span className="font-black text-yellow-900 text-xs sm:text-sm whitespace-nowrap">עד {maxCoins}+</span>
     </div>
   )
 }
@@ -144,8 +159,8 @@ function PreviewModal({ event, practice, onClose, onStart }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--t-overlay) backdrop-blur-sm p-4">
-      <div className="anim-zoom-in bg-white rounded-3xl border-8 border-(--t-side-deep) shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-xl overflow-hidden flex flex-col relative">
-        <div className={`p-6 text-center relative border-b-8 border-black/10 ${event.headerColor}`}>
+      <div className="anim-zoom-in bg-white rounded-3xl border-8 border-(--t-side-deep) shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-xl max-h-full overflow-y-auto flex flex-col relative">
+        <div className={`p-[min(1.5rem,4.5vh)] text-center relative border-b-8 border-black/10 ${event.headerColor}`}>
           <button
             onClick={onClose}
             aria-label="סגירה"
@@ -153,19 +168,19 @@ function PreviewModal({ event, practice, onClose, onStart }) {
           >
             <X size={24} strokeWidth={3} />
           </button>
-          <div className="w-24 h-24 mx-auto bg-white rounded-2xl border-4 border-slate-200 flex items-center justify-center mb-2 shadow-lg rotate-3 text-6xl leading-none">
+          <div className="w-[min(6rem,18vh)] h-[min(6rem,18vh)] mx-auto bg-white rounded-2xl border-4 border-slate-200 flex items-center justify-center mb-2 shadow-lg rotate-3 text-[min(3.75rem,11vh)] leading-none">
             {event.emoji}
           </div>
-          <h2 className="text-3xl font-black text-white tracking-wide drop-shadow-md mt-2">
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-wide drop-shadow-md mt-2">
             {event.title}
           </h2>
         </div>
 
-        <div className="p-5 md:p-8 flex flex-col items-center text-center bg-slate-50">
+        <div className="p-[min(1.25rem,4vh)] lg:p-8 flex flex-col items-center text-center bg-slate-50">
           <div className="inline-block px-4 py-1 bg-slate-200 rounded-full font-bold text-slate-500 tracking-wider text-sm mb-4">
             {event.type}
           </div>
-          <div className="flex items-center gap-3 mb-6 max-w-md">
+          <div className="flex items-center gap-3 mb-[min(1.5rem,4vh)] max-w-md">
             <button
               onClick={() => speak(event.description)}
               aria-label="להשמיע שוב"
@@ -241,7 +256,7 @@ function ChestModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-(--t-overlay) backdrop-blur-sm p-4">
-      <div className="anim-zoom-in bg-white rounded-3xl border-8 border-(--t-side-deep) shadow-2xl w-full max-w-sm overflow-hidden text-center">
+      <div className="anim-zoom-in bg-white rounded-3xl border-8 border-(--t-side-deep) shadow-2xl w-full max-w-sm max-h-full overflow-y-auto text-center">
         <div className="p-4 bg-gradient-to-br from-yellow-300 to-amber-500 border-b-8 border-black/10">
           <h2 className="text-3xl font-black text-white drop-shadow-md">תיבת האוצר!</h2>
         </div>

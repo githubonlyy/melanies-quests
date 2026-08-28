@@ -12,7 +12,7 @@ const rowsOf = (n, per = 5) => {
  * Shared by the counting widget, the balloon prompt and the compare panels.
  */
 export function EmojiGrid({ emoji, n, size = 'lg' }) {
-  const cell = size === 'lg' ? 'text-4xl md:text-5xl w-11 h-11 md:w-14 md:h-14' : 'text-3xl md:text-4xl w-9 h-9 md:w-11 md:h-11'
+  const cell = size === 'lg' ? 'text-4xl md:text-5xl short:text-2xl w-11 h-11 md:w-14 md:h-14 short:w-7 short:h-7' : 'text-3xl md:text-4xl short:text-xl w-9 h-9 md:w-11 md:h-11 short:w-6 short:h-6'
   return (
     <div className="flex flex-col items-center gap-1 md:gap-1.5" dir="ltr" aria-label={`${n} ${emoji}`}>
       {rowsOf(n).map((count, r) => (

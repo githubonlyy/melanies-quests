@@ -36,7 +36,7 @@ export default function TwoChoice({ question, disabled, onAnswer }) {
             key={panel.id}
             onClick={() => tap(panel)}
             disabled={disabled || tapped !== null}
-            className={`flex-1 min-w-[45%] min-h-56 md:min-h-72 rounded-3xl border-b-8 flex items-center justify-center p-3 md:p-5 transition-all shadow-lg select-none
+            className={`flex-1 min-w-[45%] min-h-56 md:min-h-72 short:min-h-32 rounded-3xl border-b-8 flex items-center justify-center p-3 md:p-5 short:p-2 transition-all shadow-lg select-none
               ${hitCorrect
                 ? 'bg-yellow-300 border-yellow-500 anim-wave-jump'
                 : hitWrong

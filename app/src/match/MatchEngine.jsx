@@ -188,16 +188,16 @@ function PromptDisplay({ display, onRepeat }) {
         <button
           onClick={onRepeat}
           aria-label="להשמיע שוב"
-          className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-(--t-accent-deep) border-b-8 border-(--t-side) shadow-xl text-6xl md:text-7xl flex items-center justify-center active:translate-y-2 active:border-b-0 transition-all anim-float-bob"
+          className="w-28 h-28 md:w-36 md:h-36 short:w-20 short:h-20 rounded-full bg-(--t-accent-deep) border-b-8 border-(--t-side) shadow-xl text-6xl md:text-7xl short:text-4xl flex items-center justify-center active:translate-y-2 active:border-b-0 transition-all anim-float-bob"
         >
           🔊
         </button>
       )
     case 'emoji':
-      return <span className="text-8xl md:text-9xl leading-none select-none">{display.value}</span>
+      return <span className="text-8xl md:text-9xl short:text-6xl leading-none select-none">{display.value}</span>
     case 'word':
       return (
-        <span className="text-6xl md:text-8xl font-black text-slate-800 leading-normal px-6 py-1 bg-violet-50 border-4 border-violet-200 rounded-3xl" dir="rtl">
+        <span className="text-6xl md:text-8xl short:text-4xl font-black text-slate-800 leading-normal px-6 py-1 bg-violet-50 border-4 border-violet-200 rounded-3xl" dir="rtl">
           {display.value}
         </span>
       )
@@ -205,7 +205,7 @@ function PromptDisplay({ display, onRepeat }) {
       return (
         <div className="flex items-center justify-center gap-2 md:gap-3 flex-wrap bg-amber-50 border-4 border-amber-200 rounded-3xl px-4 py-3" dir="rtl">
           {display.value.map((e, i) => (
-            <span key={i} className="text-5xl md:text-6xl leading-none">{e}</span>
+            <span key={i} className="text-5xl md:text-6xl short:text-3xl leading-none">{e}</span>
           ))}
           <span className="w-14 h-14 md:w-16 md:h-16 rounded-2xl border-4 border-dashed border-amber-400 bg-white flex items-center justify-center text-3xl font-black text-amber-500">
             ?
@@ -430,9 +430,9 @@ export default function MatchEngine({ event, mode = 'classic', practice, onExit,
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-(--t-overlay) backdrop-blur-sm" dir="rtl">
       {phase !== 'results' && (
-        <div className="flex-1 flex flex-col max-w-3xl w-full mx-auto p-3 md:p-6" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+        <div className="flex-1 flex flex-col max-w-3xl w-full mx-auto p-3 md:p-6 short:p-1.5" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
           {/* top bar */}
-          <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+          <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4 short:mb-1">
             <button
               onClick={onExit}
               aria-label="יציאה"
@@ -511,30 +511,35 @@ export default function MatchEngine({ event, mode = 'classic', practice, onExit,
           {!isPairs && question && (
             <div
               key={qIndex}
-              className={`anim-slide-in-q flex-1 bg-white rounded-3xl border-8 border-(--t-side-deep) shadow-2xl flex flex-col items-center justify-center gap-4 md:gap-6 p-4 md:p-6 pb-16 overflow-y-auto relative ${
+              className={`anim-slide-in-q flex-1 bg-white rounded-3xl border-8 border-(--t-side-deep) shadow-2xl flex flex-col split:flex-row items-center justify-center gap-4 md:gap-6 split:gap-5 p-4 md:p-6 short:p-3 pb-16 short:pb-9 overflow-y-auto relative ${
                 feedback && !feedback.correct ? 'anim-shake' : ''
               } ${feedback ? (feedback.correct ? 'outline outline-8 outline-green-400' : 'outline outline-8 outline-rose-400') : ''}`}
             >
-              <div className={`${event.headerColor} px-6 py-1.5 rounded-full border-b-4 border-black/20`}>
-                <span className="text-white font-black tracking-wide drop-shadow-sm">
-                  {isBalloon ? `${MODES.balloon.label} · ${event.title}` : event.title}
-                </span>
+              {/* ask on one side, answer on the other when the screen is short */}
+              <div className="flex flex-col items-center justify-center gap-3 md:gap-5 split:flex-1 split:min-w-0 split:h-full">
+                <div className={`${event.headerColor} px-6 py-1.5 rounded-full border-b-4 border-black/20 short:hidden`}>
+                  <span className="text-white font-black tracking-wide drop-shadow-sm">
+                    {isBalloon ? `${MODES.balloon.label} · ${event.title}` : event.title}
+                  </span>
+                </div>
+
+                {question.prompt && (
+                  <p className="text-2xl md:text-4xl short:text-xl font-black text-slate-800 text-center leading-snug" dir="rtl">
+                    {question.prompt}
+                  </p>
+                )}
+
+                <PromptDisplay display={question.display} onRepeat={repeatPrompt} />
               </div>
 
-              {question.prompt && (
-                <p className="text-2xl md:text-4xl font-black text-slate-800 text-center leading-snug" dir="rtl">
-                  {question.prompt}
-                </p>
-              )}
-
-              <PromptDisplay display={question.display} onRepeat={repeatPrompt} />
-
-              <Widget
-                key={qIndex}
-                question={question}
-                disabled={phase !== 'ask'}
-                onAnswer={(ok, fxDelay = 0) => handleAnswer(ok, false, fxDelay)}
-              />
+              <div className="w-full split:flex-1 split:min-w-0 flex items-center justify-center">
+                <Widget
+                  key={qIndex}
+                  question={question}
+                  disabled={phase !== 'ask'}
+                  onAnswer={(ok, fxDelay = 0) => handleAnswer(ok, false, fxDelay)}
+                />
+              </div>
 
               {/* floating coin gain */}
               {feedback?.correct && !practice && (

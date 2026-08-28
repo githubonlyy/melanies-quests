@@ -23,7 +23,7 @@ export const useToast = () => useContext(ToastContext)
 const TABS = [
   { id: 'events', label: 'משימות', Icon: Gamepad2, color: 'bg-green-500', active: 'text-green-300' },
   { id: 'closet', label: 'ארון', Icon: Shirt, color: 'bg-pink-500', active: 'text-pink-300' },
-  { id: 'world', label: 'העולם שלי', Icon: Sparkles, color: 'bg-fuchsia-500', active: 'text-fuchsia-300' },
+  { id: 'world', label: 'העולם שלי', short: 'העולם', Icon: Sparkles, color: 'bg-fuchsia-500', active: 'text-fuchsia-300' },
   { id: 'rewards', label: 'פרסים', Icon: Store, color: 'bg-purple-500', active: 'text-purple-300' },
   { id: 'arcade', label: 'משחקים', Icon: Joystick, color: 'bg-sky-500', active: 'text-sky-300' },
   { id: 'trophies', label: 'גביעים', Icon: Trophy, color: 'bg-yellow-500', active: 'text-yellow-300' },
@@ -119,10 +119,10 @@ export default function App() {
         dir="rtl"
         data-theme={theme.id}
         style={{ ...theme.vars, backgroundImage: 'radial-gradient(circle at center, var(--t-bg-from) 0%, var(--t-bg-to) 100%)' }}
-        className="flex flex-col md:flex-row h-dvh w-full text-slate-800 font-sans overflow-hidden selection:bg-yellow-400 selection:text-black"
+        className="flex flex-col lg:flex-row h-dvh w-full text-slate-800 font-sans overflow-hidden selection:bg-yellow-400 selection:text-black"
       >
         {/* SIDEBAR — tablet/desktop only (right side in RTL); phones get the bottom nav */}
-        <aside className="hidden md:flex w-64 bg-(--t-side) border-e-4 border-(--t-side-deep) flex-col relative z-20 shadow-2xl">
+        <aside className="hidden lg:flex w-64 bg-(--t-side) border-e-4 border-(--t-side-deep) flex-col relative z-20 shadow-2xl">
           <div className="p-4 md:p-6 border-b-4 border-(--t-side-deep) flex flex-col items-start">
             <div className="bg-yellow-400 p-2 md:p-3 rounded-2xl border-b-4 border-yellow-600 shadow-lg mb-2 rotate-3">
               <Heart className="text-pink-600 h-8 w-8 md:h-10 md:w-10 fill-current" />
@@ -169,20 +169,20 @@ export default function App() {
 
         {/* MAIN */}
         <main className="flex-1 flex flex-col relative overflow-hidden min-h-0">
-          <header className="h-16 md:h-24 shrink-0 bg-(--t-side)/80 backdrop-blur-md border-b-4 border-(--t-side-deep) flex items-center justify-between px-3 md:px-8 z-10 shadow-md">
-            <div className="flex items-center gap-2 md:gap-4">
+          <header className="h-16 lg:h-24 shrink-0 bg-(--t-side)/80 backdrop-blur-md border-b-4 border-(--t-side-deep) flex items-center justify-between px-3 lg:px-8 z-10 shadow-md">
+            <div className="flex items-center gap-2 lg:gap-4">
               <button
                 onClick={() => setActiveTab('closet')}
                 aria-label="הארון שלי"
-                className="w-12 h-12 md:w-16 md:h-16 bg-white rounded-xl md:rounded-2xl border-4 border-(--t-accent) flex items-end justify-center shadow-lg relative overflow-hidden active:scale-95 transition-transform"
+                className="w-12 h-12 lg:w-16 lg:h-16 bg-white rounded-xl lg:rounded-2xl border-4 border-(--t-accent) flex items-end justify-center shadow-lg relative overflow-hidden active:scale-95 transition-transform"
               >
-                <Avatar size={64} className="md:scale-110 origin-bottom" />
+                <Avatar size={64} className="lg:scale-110 origin-bottom" />
               </button>
               <div className="flex flex-col">
-                <span className="text-base md:text-2xl text-white font-black drop-shadow-md tracking-wide leading-tight">מלאני</span>
-                <div className="flex items-center gap-1.5 md:gap-2 w-28 md:w-48">
-                  <span className="text-[10px] md:text-xs font-black text-(--t-text-soft) whitespace-nowrap">רמה {state.level}</span>
-                  <div className="flex-1 h-3 md:h-4 bg-black/40 rounded-full border-2 border-(--t-side-deep) overflow-hidden relative">
+                <span className="text-base lg:text-2xl text-white font-black drop-shadow-md tracking-wide leading-tight">מלאני</span>
+                <div className="flex items-center gap-1.5 lg:gap-2 w-16 sm:w-28 lg:w-48">
+                  <span className="text-[10px] lg:text-xs font-black text-(--t-text-soft) whitespace-nowrap">רמה {state.level}</span>
+                  <div className="flex-1 h-3 lg:h-4 bg-black/40 rounded-full border-2 border-(--t-side-deep) overflow-hidden relative">
                     <div
                       className="absolute top-0 start-0 h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-1000"
                       style={{ width: `${xpPct}%` }}
@@ -193,11 +193,11 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 md:gap-3">
+            <div className="flex items-center gap-1.5 lg:gap-3">
               <button
                 onClick={toggleSpeech}
                 aria-label={speechOn ? 'כיבוי הקראה' : 'הפעלת הקראה'}
-                className={`w-9 h-9 md:w-11 md:h-11 rounded-xl border-b-4 flex items-center justify-center transition-all active:translate-y-0.5 active:border-b-2
+                className={`w-11 h-11 rounded-xl border-b-4 flex items-center justify-center transition-all active:translate-y-0.5 active:border-b-2
                   ${speechOn ? 'bg-green-500 border-green-700 text-white' : 'bg-black/40 border-(--t-side-deep) text-(--t-text-soft)'}`}
               >
                 {speechOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -205,32 +205,32 @@ export default function App() {
               <button
                 onClick={toggleMusic}
                 aria-label={musicOn ? 'כיבוי מוזיקה' : 'הפעלת מוזיקה'}
-                className={`w-9 h-9 md:w-11 md:h-11 rounded-xl border-b-4 flex items-center justify-center transition-all active:translate-y-0.5 active:border-b-2 relative
+                className={`w-11 h-11 rounded-xl border-b-4 flex items-center justify-center transition-all active:translate-y-0.5 active:border-b-2 relative
                   ${musicOn ? 'bg-green-500 border-green-700 text-white' : 'bg-black/40 border-(--t-side-deep) text-(--t-text-soft)'}`}
               >
                 <Music size={18} />
                 {!musicOn && <span className="absolute w-7 h-0.5 bg-red-400 rotate-45 rounded"></span>}
               </button>
               {state.streak.count > 0 && (
-                <div className="flex items-center gap-1 bg-orange-500 border-2 border-orange-300 rounded-xl px-2 py-1 md:px-3 md:py-1.5 shadow-md rotate-2">
+                <div className="hidden sm:flex items-center gap-1 bg-orange-500 border-2 border-orange-300 rounded-xl px-2 py-1 lg:px-3 lg:py-1.5 shadow-md rotate-2">
                   <Flame size={16} className="text-yellow-200 fill-yellow-300" />
-                  <span className="text-white font-black text-sm md:text-lg tabular-nums">{state.streak.count}</span>
+                  <span className="text-white font-black text-sm lg:text-lg tabular-nums">{state.streak.count}</span>
                 </div>
               )}
-              <div className="flex items-center bg-black/40 border-4 border-(--t-side-deep) rounded-xl md:rounded-2xl px-2.5 py-1 md:px-6 md:py-3 shadow-inner -rotate-1">
-                <div className="bg-yellow-400 p-1 md:p-1.5 rounded-full me-1.5 md:me-3 border-2 border-yellow-600 shadow-sm">
-                  <Coins className="text-yellow-900 fill-yellow-200 w-4 h-4 md:w-5 md:h-5" />
+              <div className="flex items-center bg-black/40 border-2 sm:border-4 border-(--t-side-deep) rounded-xl lg:rounded-2xl px-2 sm:px-2.5 py-1 lg:px-6 lg:py-3 shadow-inner -rotate-1">
+                <div className="bg-yellow-400 p-1 lg:p-1.5 rounded-full me-1 sm:me-1.5 lg:me-3 border-2 border-yellow-600 shadow-sm">
+                  <Coins className="text-yellow-900 fill-yellow-200 w-4 h-4 lg:w-5 lg:h-5" />
                 </div>
-                <span className="text-lg md:text-3xl text-yellow-400 font-black tracking-wide drop-shadow-sm tabular-nums">
+                <span className="text-base sm:text-lg lg:text-3xl text-yellow-400 font-black tracking-wide drop-shadow-sm tabular-nums">
                   {state.coins.toLocaleString()}
                 </span>
               </div>
             </div>
           </header>
 
-          <div className="flex-1 overflow-y-auto p-3 md:p-8 relative">
+          <div className="flex-1 overflow-y-auto p-3 lg:p-6 relative">
             {/* no z-index here: it would cap the fixed game overlays below the z-20 sidebar */}
-            <div className="relative max-w-5xl mx-auto pb-8 md:pb-20">
+            <div className="relative max-w-5xl mx-auto pb-6 lg:pb-20">
               {activeTab === 'events' && (
                 <EventBoard
                   onStartMatch={(event, mode) => setMatch({ event, mode, practice: playedToday(event.id) })}
@@ -248,21 +248,21 @@ export default function App() {
 
         {/* BOTTOM NAV — phones only */}
         <nav
-          className="md:hidden shrink-0 grid grid-cols-7 bg-(--t-side) border-t-4 border-(--t-side-deep) z-20 shadow-[0_-4px_12px_rgba(0,0,0,0.3)]"
+          className="lg:hidden shrink-0 grid grid-cols-7 bg-(--t-side) border-t-4 border-(--t-side-deep) z-20 shadow-[0_-4px_12px_rgba(0,0,0,0.3)]"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           {TABS.map((t) => (
             <BottomNavItem
               key={t.id}
-              icon={<t.Icon size={22} />}
-              label={t.label}
+              icon={<t.Icon size={24} />}
+              label={t.short ?? t.label}
               isActive={activeTab === t.id}
               activeColor={t.active}
               onClick={() => setActiveTab(t.id)}
             />
           ))}
           <BottomNavItem
-            icon={<BarChart3 size={22} />}
+            icon={<BarChart3 size={24} />}
             label="הורים"
             isActive={activeTab === 'admin'}
             activeColor="text-slate-200"

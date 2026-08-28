@@ -34,7 +34,7 @@ export function DotsStrip({ dots }) {
   )
 
   return (
-    <div className="flex items-center justify-center gap-3 md:gap-4 flex-wrap bg-slate-50 border-4 border-slate-200 rounded-2xl px-4 py-3" dir="ltr">
+    <div className="flex items-center justify-center gap-3 md:gap-4 short:gap-1.5 flex-wrap bg-slate-50 border-4 border-slate-200 rounded-2xl px-4 py-3 short:px-2 short:py-1.5" dir="ltr">
       {b >= 0 ? (
         <>
           {group(a, 'bg-pink-400 border-pink-600')}
@@ -71,12 +71,12 @@ export default function NumberPad({ question, disabled, onAnswer, maxDigits = 2 
   }
 
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-  const keyCls = 'min-h-18 md:min-h-20 rounded-2xl border-b-8 text-4xl font-black transition-all shadow active:border-b-0 active:translate-y-2 disabled:opacity-50 flex items-center justify-center'
+  const keyCls = 'min-h-18 md:min-h-20 short:min-h-11 rounded-2xl border-b-8 text-4xl short:text-2xl font-black transition-all shadow active:border-b-0 active:translate-y-2 disabled:opacity-50 flex items-center justify-center'
 
   return (
-    <div className="flex flex-col items-center gap-3 md:gap-4 w-full max-w-sm mx-auto">
+    <div className="flex flex-col items-center gap-3 md:gap-4 short:gap-1.5 w-full max-w-sm short:max-w-xs mx-auto">
       <div
-        className={`w-full font-black text-5xl md:text-6xl text-center py-2 rounded-2xl border-4 shadow-inner min-h-20 flex items-center justify-center tracking-widest tabular-nums transition-colors
+        className={`w-full font-black text-5xl md:text-6xl short:text-3xl text-center py-2 short:py-0 rounded-2xl border-4 shadow-inner min-h-20 short:min-h-12 flex items-center justify-center tracking-widest tabular-nums transition-colors
           ${result === 'ok'
             ? 'bg-green-100 border-green-400 text-green-700'
             : result === 'bad'
@@ -87,7 +87,7 @@ export default function NumberPad({ question, disabled, onAnswer, maxDigits = 2 
         {value || <span className="text-slate-500">?</span>}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 md:gap-3 w-full" dir="ltr">
+      <div className="grid grid-cols-3 gap-2 md:gap-3 short:gap-1.5 w-full" dir="ltr">
         {keys.map((k) => (
           <button key={k} onClick={() => press(k)} disabled={disabled || !!result} className={`${keyCls} bg-white text-slate-800 border-slate-300`}>
             {k}

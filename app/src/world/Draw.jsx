@@ -469,7 +469,7 @@ export default function Draw({ onClose }) {
         </div>
 
         <div
-          className="shrink-0 bg-(--t-side) border-(--t-side-deep) border-t-4 landscape:border-t-0 landscape:border-s-4 landscape:order-first landscape:w-52 max-h-[46%] landscape:max-h-none overflow-y-auto overflow-x-hidden p-2 flex flex-col gap-2"
+          className="shrink-0 bg-(--t-side) border-(--t-side-deep) border-t-4 landscape:border-t-0 landscape:border-s-4 landscape:order-first landscape:w-52 max-h-[42%] landscape:max-h-none overflow-y-auto overflow-x-hidden p-2 flex flex-col gap-2"
           style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         >
           {/* tools */}
@@ -513,7 +513,7 @@ export default function Draw({ onClose }) {
                 onClick={() => pickSize(s.id)}
                 aria-label={s.label}
                 aria-pressed={sizeId === s.id}
-                className={`w-14 h-14 rounded-2xl border-b-4 flex items-center justify-center transition-all active:translate-y-0.5 active:border-b-2
+                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border-b-4 flex items-center justify-center transition-all active:translate-y-0.5 active:border-b-2
                   ${sizeId === s.id ? 'bg-(--t-accent) border-(--t-accent-deep)' : 'bg-white/15 border-black/30'}`}
               >
                 <span
@@ -525,14 +525,14 @@ export default function Draw({ onClose }) {
           </div>
 
           {/* colors */}
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
             {palette.map((c) => (
               <button
                 key={c}
                 onClick={() => pickColor(c)}
                 aria-label={`צבע ${c}`}
                 aria-pressed={color === c && tool !== 'eraser'}
-                className={`w-14 h-14 rounded-full border-4 transition-transform active:scale-90
+                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full border-4 transition-transform active:scale-90
                   ${color === c && tool !== 'eraser' ? 'border-white ring-4 ring-(--t-accent) scale-110' : 'border-black/25'}`}
                 style={{ background: c }}
               />
@@ -645,7 +645,7 @@ function IconBtn({ onClick, label, disabled, tone, children }) {
       aria-label={label}
       title={label}
       disabled={disabled}
-      className={`w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center transition-all active:translate-y-0.5 active:border-b-2 disabled:opacity-40 ${skin}`}
+      className={`w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl flex items-center justify-center transition-all active:translate-y-0.5 active:border-b-2 disabled:opacity-40 ${skin}`}
     >
       {children}
     </button>

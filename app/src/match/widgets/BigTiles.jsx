@@ -58,7 +58,7 @@ function TileContent({ tile }) {
   if (tile.kind === 'shape') return <ShapeSvg name={tile.value} size={96} className="md:w-28 md:h-28 drop-shadow-md" />
   if (tile.kind === 'emoji') return <span className="text-6xl md:text-7xl leading-none">{tile.value}</span>
   const n = baseLen(tile.value)
-  const size = n <= 1 ? 'text-7xl md:text-8xl' : n <= 3 ? 'text-5xl md:text-6xl' : 'text-4xl md:text-5xl'
+  const size = n <= 1 ? 'text-7xl md:text-8xl short:text-4xl' : n <= 3 ? 'text-5xl md:text-6xl short:text-3xl' : 'text-4xl md:text-5xl short:text-3xl'
   return (
     <span className={`${size} font-black leading-normal`} dir="rtl">
       {tile.value}
@@ -100,7 +100,7 @@ export default function BigTiles({ question, disabled, onAnswer }) {
             <button
               onClick={() => tap(tile)}
               disabled={disabled || tapped !== null}
-              className={`w-full min-h-32 md:min-h-40 rounded-3xl border-b-8 flex items-center justify-center p-3 transition-all shadow-lg select-none
+              className={`w-full min-h-32 md:min-h-40 short:min-h-16 rounded-3xl border-b-8 flex items-center justify-center p-3 short:p-1.5 transition-all shadow-lg select-none
                 ${hitCorrect
                   ? 'bg-yellow-300 border-yellow-500 text-yellow-900 anim-wave-jump'
                   : hitWrong
