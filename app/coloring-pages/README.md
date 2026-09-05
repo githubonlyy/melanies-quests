@@ -4,7 +4,7 @@ Drop line-art image files in this folder. They show up in the drawing game under
 **המשפחה שלי**, next to the built-in coloring pages. No code change, no manifest.
 
 ```
-app/src/world/draw/family/
+app/coloring-pages/
   סבתא.png
   הכלב-שלנו.jpg
   טומי-ומיכאל.svg
@@ -20,7 +20,7 @@ app/src/world/draw/family/
 
 The page is drawn *above* the canvas so the black lines stay crisp while she
 colors underneath. Raster files therefore get cleaned up on load
-(`../pageInk.js`):
+(`../src/world/draw/pageInk.js`):
 
 1. the desk/table around a photographed page is cropped off
 2. the lighting gradient is flattened and cream paper is normalised to white

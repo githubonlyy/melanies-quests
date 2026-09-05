@@ -1,5 +1,5 @@
-// Family coloring pages: every image file in ./family/ becomes a page she can
-// color. No manifest — drop a file in the folder, commit, and it shows up.
+// Family coloring pages: every image file in app/coloring-pages/ becomes a page
+// she can color. No manifest — drop a file in the folder, commit, and it shows up.
 // The filename is the page name, so name them in Hebrew (סבתא.png -> "סבתא").
 
 import { processPage } from './pageInk.js'
@@ -24,7 +24,9 @@ export function pagesFromGlob(globResult) {
     .sort((a, b) => a.name.localeCompare(b.name, 'he'))
 }
 
-const files = import.meta.glob('./family/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,svg,SVG}', {
+// app/coloring-pages/ — deliberately shallow so the folder is easy to find and
+// drop files into from Explorer, rather than buried five levels down in src/.
+const files = import.meta.glob('../../../coloring-pages/*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,WEBP,svg,SVG}', {
   eager: true,
   query: '?url',
   import: 'default',
@@ -35,7 +37,10 @@ export const hasFamilyPages = FAMILY_PAGES.length > 0
 export const familyPageById = (id) => FAMILY_PAGES.find((p) => p.id === id) ?? null
 
 const MAX_SIDE = 1400
-const THUMB_SIDE = 220 // picker tiles: same cleanup, cheap enough to run for every page
+// Picker tiles render ~150px, but keying at that size averages thin strokes
+// into near-white and dense line art comes out washed out. Process large and
+// let the browser downscale the already-keyed image instead.
+const THUMB_SIDE = 700
 const cache = new Map() // id -> { url, width, height } processed overlay
 const thumbCache = new Map()
 

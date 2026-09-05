@@ -194,13 +194,13 @@ describe('processPage on a photographed page', () => {
 
 describe('family page discovery', () => {
   it('derives a Hebrew-friendly name and slug id from the filename', () => {
-    expect(pageMetaFromPath('./family/סבתא.png')).toMatchObject({ name: 'סבתא', vector: false })
-    expect(pageMetaFromPath('./family/the_dog.svg')).toMatchObject({ name: 'the dog', vector: true })
-    expect(pageMetaFromPath('./family/Tommy-2026.JPG').id).toBe('family-tommy-2026')
+    expect(pageMetaFromPath('../../../coloring-pages/סבתא.png')).toMatchObject({ name: 'סבתא', vector: false })
+    expect(pageMetaFromPath('../../../coloring-pages/the_dog.svg')).toMatchObject({ name: 'the dog', vector: true })
+    expect(pageMetaFromPath('../../../coloring-pages/Tommy-2026.JPG').id).toBe('family-tommy-2026')
   })
 
   it('maps and sorts a glob result', () => {
-    const pages = pagesFromGlob({ './family/ב.png': '/b.png', './family/א.png': '/a.png' })
+    const pages = pagesFromGlob({ '../../../coloring-pages/ב.png': '/b.png', '../../../coloring-pages/א.png': '/a.png' })
     expect(pages.map((p) => p.name)).toEqual(['א', 'ב'])
     expect(pages[0]).toMatchObject({ url: '/a.png', kind: 'image' })
   })
