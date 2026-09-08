@@ -3,6 +3,13 @@
   "plugins": ["react", "oxc"],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "react/jsx-no-undef": "error",
+    "no-undef": "error"
+  },
+  "env": {
+    "browser": true,
+    "es2024": true,
+    "node": true
   }
 }
