@@ -1,31 +1,27 @@
 # Melanie's Quests · המסע של מלאני
 
-Tablet-first homework game for a first grader (כיתה א'). Sister app of
-[Tommy's Quests](https://github.com/githubonlyy/tommys-quests): same engine,
-first-grade content, Hebrew text-to-speech on every prompt, three pick-each-time
-worlds (ברבי / חד-קרן / פרחים), and a dress-up avatar that coins buy clothes for.
+Tablet-first homework game for a first grader (כיתה א').
 
-- Live: https://githubonlyy.github.io/melanies-quests/
-- Design spec: [docs/superpowers/specs/2026-08-26-melanies-quests-design.md](docs/superpowers/specs/2026-08-26-melanies-quests-design.md)
+- **Live:** https://githubonlyy.github.io/melanies-quests/
+- **Source:** [githubonlyy/kids-quests](https://github.com/githubonlyy/kids-quests) — not here
 
-## Develop
+## This repo is not where the app is built
 
-```powershell
-cd app
-npm ci
-npm run dev      # http://localhost:5173 — host:true so the tablet on the same WiFi can open it
-npm test         # vitest
-npm run lint     # oxlint
-npm run build
-```
+One engine now serves all three children. The source moved to `kids-quests` in
+September 2026, and the `app/` tree that used to live here was deleted on
+2026-09-12 rather than left to rot into a second, wrong answer.
 
-Deploys automatically to GitHub Pages on push to `master` (`.github/workflows/ci.yml`).
-`deploy.ps1` is a manual fallback.
+What remains is the published site: GitHub Pages serves the `gh-pages` branch,
+and `kids-quests` CI force-pushes each new build to it. The URL, the home-screen
+icon and the saved progress in `localStorage` (`melanies-quests-v1`) are
+unchanged — keeping them is the reason this repo still exists.
 
-## Parent notes
+To change anything about the app — subjects, questions, rewards, the avatar and
+her wardrobe, Melanie's own content under `src/profiles/melanie/` — work in
+`kids-quests`. A push to its `master` rebuilds and redeploys all three children.
 
-- Coach tab PIN defaults to `1234` — change it on first use (Coach → החלפת קוד).
-- Subjects and difficulty live in `app/src/data/questions/*.json` — plain JSON, edit freely.
-- Real-world rewards are `app/src/data/shop.json`; avatar clothes are `app/src/data/wardrobe.json`.
-- Economy knobs: `app/src/data/config.json` (questions per match, win thresholds, daily goal, chest).
-- Everything is stored in the browser's localStorage (`melanies-quests-v1`); clearing site data resets progress.
+Her design spec moved with the source and now lives in `kids-quests` under
+`docs/superpowers/specs/`, together with the family coloring pages spec.
+
+The history here is intact: every commit up to the migration is still in this
+repo, and the old source is recoverable from it.
